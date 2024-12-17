@@ -12,16 +12,30 @@ echo ""
 
 CompileUFO=true
 UFOName=RKZp_UFO
-EVTpRUN=100000
+EVTpRUN=10000
 
-Hw_Loc=/data6/Users/taehee/HerwigWD
-Singularity_Loc=$Hw_Loc
+Hw_Loc=/u/user/taehee/HerwigWD
+Singularity_Loc=/u/user/taehee/HerwigLoc
 sample=${3}
 ZprimeMass=${4}
 Coupling=${5}
 
-outputdir=/gv0/Users/taehee/HerwigSample/hw/MZp-${ZprimeMass}/${sample}
+outputdir=/pnfs/knu.ac.kr/data/cms/store/user/taehee/HerwigSample/hw/MZp-${ZprimeMass}/${sample}
 WD=${Hw_Loc}/hw7_validation/FullShower/RKZp/13TeV/QCD_M5_13TeV-mg-hw/tmp/MZp-${ZprimeMass}/${sample}/${2}
+if [[ -f "${outputdir}/${2}/filtered.hepmc" ]]; then
+    echo "${outputdir}/${2}/filtered.hepmc exists..."
+    exit 1
+elif [[ -f "${outputdir}/${2}/LHC.hepmc" ]]; then
+    echo "${outputdir}/${2}/LHC.hepmc exists... just filter the hepmc file"
+    cd ${outputdir}/${2}
+    cp /u/user/taehee/HerwigWD/hw7_validation/FullShower/RKZp/13TeV/QCD_M5_13TeV-mg-hw/filter.py .
+    pip install pyhepmc
+    python3 filter.py
+    rm filter.py
+    exit 1
+else
+    rm -rf ${outputdir}/${2}
+fi
 
 # Herwig7 basic setups
 #ln -s $(which python3) $Singularity_Loc/.local/bin/python
@@ -49,20 +63,21 @@ echo "Make a run directory, $outputdir"
 mkdir -p ${outputdir}
 mkdir -p ${WD}
 cd ${WD}
-cp $Hw_Loc/hw7_validation/FullShower/RKZp/13TeV/QCD_M5_13TeV-mg-hw/RAnalysis.cc ${WD}
+cp /u/user/taehee/HerwigWD/hw7_validation/FullShower/RKZp/13TeV/QCD_M5_13TeV-mg-hw/RAnalysis.cc ${WD}
+cp /u/user/taehee/HerwigWD/hw7_validation/FullShower/RKZp/13TeV/QCD_M5_13TeV-mg-hw/filter.py ${WD}
 
-RB="$Hw_Loc/bin/rivet-build"
-source "$Hw_Loc/bin/activate"
+RB="$Singularity_Loc/bin/rivet-build"
+source "$Singularity_Loc/bin/activate"
 
 # compiling ufo file
 if [ "$CompileUFO" = true ] && [ ! -f FRModel.model ]; then
   if [[ ! -d ${UFOName} ]]; then
-    cp -r /gv0/Users/taehee/HerwigSample/feynrules-current/Models/RKZp/RKZp_UFO ${WD}
+    cp -r $Hw_Loc/hw7_validation/FullShower/RKZp/13TeV/QCD_M5_13TeV-mg-hw/feynrules-current/Models/RKZp/RKZp_UFO ${WD}
     sed -i "127s/10./${ZprimeMass}/" ${UFOName}/parameters.py
     sed -i "23s/1./${Coupling}/" ${UFOName}/parameters.py #gbb
     sed -i "187s/0.04/0.0001/" ${UFOName}/parameters.py #gbs
   fi
-  ufo2herwig ${UFOName} --enable-bsm-shower
+  ufo2herwig ${UFOName} --enable-bsm-shower --convert
   sed -i "s/echo \*.cc/echo FRModel*.cc/g" Makefile
   sed -i "35,87s/^/#/" FRModel.model
   sed -i "101,123s/^/#/" FRModel.model
@@ -81,7 +96,7 @@ echo "Start runnning LHC.${1}.${2} (mg job # = ${sample})"
 rnum=$(shuf -i 1-99999999 -n 1)
 sed -e "s/__NEVENTS__/${EVTpRUN}/g" ${Hw_Loc}/hw7_validation/FullShower/RKZp/13TeV/QCD_M5_13TeV-mg-hw/LHC.in > LHC.in
 sed -i "s/__SEED__/${rnum}/g" LHC.in
-sed -i "s/__DIR__/\/gv0\/Users\/taehee\/HerwigSample\/mg\/MZp-${ZprimeMass}\/${sample}\/${2}/g" LHC.in
+sed -i "s/__DIR__/\/pnfs\/knu.ac.kr\/data\/cms\/store\/user\/taehee\/HerwigSample\/mg\/MZp-${ZprimeMass}\/${sample}\/${2}/g" LHC.in
 if [ "$ZprimeMass" -lt 9 ];then
     sed -i '37s/^/#/' LHC.in
 fi
@@ -94,9 +109,11 @@ mv ${WD} ${outputdir}
 cd ${outputdir}/${2}
 Herwig read LHC.in 
 Herwig run LHC.run 
+pip install pyhepmc
+python3 filter.py
 
 mv FRModel.model ..
-rm -rf FR* *.cc ${UFOName}* __pycache__ Makefile param_card.dat RAnalysis.* *tex *out Loop*
+rm -rf FR* *.cc ${UFOName}* __pycache__ Makefile param_card.dat RAnalysis.* *tex *out Loop* filter.py
 
 echo ""
 now=$(date +"%T")

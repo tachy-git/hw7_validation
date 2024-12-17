@@ -1,6 +1,9 @@
 #!/bin/bash
 
-#SAMPLES=("Pt-60To65_1366782" "Pt-65To70_1366783" "Pt-70To75_1366784" "Pt-75To80_1366785" "Pt-80To85_1366786" "Pt-85To90_1366787" "Pt-90To100_1366788" "Pt-100To140_1366789" "Pt-140To200_1366790" "Pt-200To9999_1366792")
+SAMPLES=("Pt-130To135_1132246" "Pt-135To140_1132294" "Pt-140To150_1132295" "Pt-150To160_1132248" "Pt-160To170_1132249" "Pt-170To200_1132250" "Pt-200To9999_1132251")
+SAMPLES=("Pt-230To240_1132296" "Pt-240To250_1132297" "Pt-250To270_1132298" "Pt-270To300_1132299" "Pt-300To350_1132300" "Pt-350To9999_1132258")
+SAMPLES=("Pt-130To135_345510" "Pt-135To140_345511" "Pt-140To150_345512" "Pt-150To160_345513" "Pt-160To170_345514" "Pt-170To180_345515" "Pt-180To200_345516" "Pt-200To250_345517" "Pt-250To9999_345518")
+SAMPLES=("Pt-230To240_345524" "Pt-240To250_345525" "Pt-250To260_345526" "Pt-260To280_1132311" "Pt-280To300_1132312" "Pt-300To350_1132313" "Pt-350To400_1132314" "Pt-400To9999_1132315")
 
 zpmass=${1}
 
@@ -14,8 +17,8 @@ echo "Starting time : $now"
 echo ""
 echo ""
 
-Singularity_Loc=/data6/Users/taehee/HerwigWD/
-Hw_Loc=/data6/Users/taehee/HerwigWD/
+Singularity_Loc=/u/user/taehee/HerwigWD
+Hw_Loc=/u/user/taehee/HerwigWD
 WD=$Hw_Loc/hw7_validation/FullShower/RKZp/13TeV/QCD_M5_13TeV-mg-hw/
 
 # Herwig7 basic setups
@@ -52,7 +55,7 @@ echo "# Merge and Stack Yodas #"
 echo "#########################"
 index=0
 for sample in "${SAMPLES[@]}"; do
-    yodafiles=$(find /gv0/Users/taehee/HerwigSample/hw/MZp-${zpmass}/${sample}/ -type f -name "LHC.yoda")
+    yodafiles=$(find /pnfs/knu.ac.kr/data/cms/store/user/taehee/HerwigSample/hw/MZp-${zpmass}/${sample}/ -type f -name "LHC.yoda")
     yodamerge -o "LHC-$index.yoda" $yodafiles
     index=$((index + 1))
 done
