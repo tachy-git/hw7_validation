@@ -1,11 +1,12 @@
 #!/bin/bash
 
-SAMPLES=("Pt-130To135_1132246" "Pt-135To140_1132294" "Pt-140To150_1132295" "Pt-150To160_1132248" "Pt-160To170_1132249" "Pt-170To200_1132250" "Pt-200To9999_1132251")
-SAMPLES=("Pt-230To240_1132296" "Pt-240To250_1132297" "Pt-250To270_1132298" "Pt-270To300_1132299" "Pt-300To350_1132300" "Pt-350To9999_1132258")
-SAMPLES=("Pt-130To135_345510" "Pt-135To140_345511" "Pt-140To150_345512" "Pt-150To160_345513" "Pt-160To170_345514" "Pt-170To180_345515" "Pt-180To200_345516" "Pt-200To250_345517" "Pt-250To9999_345518")
-SAMPLES=("Pt-230To240_345524" "Pt-240To250_345525" "Pt-250To260_345526" "Pt-260To280_1132311" "Pt-280To300_1132312" "Pt-300To350_1132313" "Pt-350To400_1132314" "Pt-400To9999_1132315")
+#SAMPLES=("Pt-60To65_1366782" "Pt-65To70_1366783" "Pt-70To75_1366784" "Pt-75To80_1366785" "Pt-80To85_1366786" "Pt-85To90_1366787" "Pt-90To100_1366788" "Pt-100To140_1366789" "Pt-140To200_1366790" "Pt-200To9999_1366792")
+SAMPLES=("Pt-200To210_4765938" "Pt-210To220_4765939" "Pt-220To230_4765940" "Pt-230To250_4765941" "Pt-250To270_4765942" "Pt-270To300_4765943" "Pt-300To400_4765944" "Pt-400To9999_4765945")
+SAMPLES=("Pt-200To210_4767501" "Pt-210To220_4767502" "Pt-220To230_4767503" "Pt-230To250_4767504" "Pt-250To270_4767505" "Pt-270To300_4767506" "Pt-300To400_4767507" "Pt-400To9999_4767508")
+SAMPLES=("Pt-140To145_4767530" "Pt-145To150_4767531" "Pt-150To160_4767532" "Pt-160To170_4767533" "Pt-170To180_4767534" "Pt-180To200_4767535" "Pt-200To240_4767536" "Pt-240To300_4767537" "Pt-300To9999_4767538")
 
 zpmass=${1}
+coupling=${2}
 
 #############
 ### setup ###
@@ -17,9 +18,8 @@ echo "Starting time : $now"
 echo ""
 echo ""
 
-Singularity_Loc=/u/user/taehee/HerwigWD
-Hw_Loc=/u/user/taehee/HerwigWD
-WD=$Hw_Loc/hw7_validation/FullShower/RKZp/13TeV/QCD_M5_13TeV-mg-hw/
+Hw_Loc=/cms/ldap_home/taehee/HerwigWD/
+Singularity_Loc=$Hw_Loc
 
 # Herwig7 basic setups
 #ln -s $(which python3) $Singularity_Loc/.local/bin/python
@@ -42,7 +42,6 @@ export PKG_CONFIG_PATH="$Singularity_Loc/.local/lib/pkgconfig"
 ###########
 ### run ###
 ###########
-cd $WD
 rm -rf yoda_${zpmass}
 mkdir yoda_${zpmass}
 cd yoda_${zpmass}
@@ -55,7 +54,7 @@ echo "# Merge and Stack Yodas #"
 echo "#########################"
 index=0
 for sample in "${SAMPLES[@]}"; do
-    yodafiles=$(find /pnfs/knu.ac.kr/data/cms/store/user/taehee/HerwigSample/hw/MZp-${zpmass}/${sample}/ -type f -name "LHC.yoda")
+    yodafiles=$(find /cms_scratch/taehee/HerwigSample/hw_nEvt-100000/MZp-${zpmass}/gbb-${coupling}/${sample}/ -type f -name "LHC.yoda")
     yodamerge -o "LHC-$index.yoda" $yodafiles
     index=$((index + 1))
 done
