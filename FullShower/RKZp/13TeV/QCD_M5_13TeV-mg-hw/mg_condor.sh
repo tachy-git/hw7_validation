@@ -9,16 +9,16 @@ runFO1j=false
 runFO2j=false
 runFO12j=false
 
-Hw_Loc=/u/user/taehee/HerwigLoc
+Hw_Loc=/cms/ldap_home/taehee/HerwigWD/
 Singularity_Loc=$Hw_Loc
 MG_version="MG5_aMC_v3_5_1"
 
-nevents=10000
+nevents=100000
 ebeam=6500
 
 MG="$Hw_Loc/opt/$MG_version/bin/mg5_aMC"
-outputdir=/pnfs/knu.ac.kr/data/cms/store/user/taehee/HerwigSample/mg/MZp-${5}/Pt-${3}To${4}_${1}/${2}
-WD="tmp/mg/MZp-${5}/Pt-${3}To${4}_${1}/${2}"
+outputdir=/cms_scratch/taehee/HerwigSample/mg_nEvt-$nevents/MZp-${5}/Pt-${3}To${4}_${1}/${2}
+WD="tmp/mg_nEvt-$nevents/MZp-${5}/Pt-${3}To${4}_${1}/${2}"
 mkdir -p ${WD}
 cd ${WD}
 
@@ -47,6 +47,7 @@ eval "$(pyenv virtualenv-init -)"
 #export CPPFLAGS="-I$Singularity_Loc/.local/include"
 #export PKG_CONFIG_PATH="$Singularity_Loc/.local/lib/pkgconfig"
 export LD_LIBRARY_PATH=$Singularity_Loc/opt/$MG_version/HEPTools/lhapdf6_py3//lib:$LD_LIBRARY_PATH
+export PYTHONPATH=/cms/ldap_home/taehee/.local/lib/python3.8/site-packages:$PYTHONPATH
 python -m pip install six --user
 
 # setup file for RS to be stored
