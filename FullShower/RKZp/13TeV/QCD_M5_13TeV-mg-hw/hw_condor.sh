@@ -21,8 +21,8 @@ sample=${3}
 ZprimeMass=${4}
 Coupling=${5}
 
-outputdir=/cms_scratch/taehee/HerwigSample/hw_nEvt-${EVTpRUN}/MZp-${ZprimeMass}/${sample}/${process}
-WD=/cms_scratch/taehee/HerwigSample/hw_nEvt-${EVTpRUN}/MZp-${ZprimeMass}/${sample}/${process}
+outputdir=/cms_scratch/taehee/HerwigSample/hw_nEvt-${EVTpRUN}/MZp-${ZprimeMass}/gbb-${Coupling//./p}/${sample}/${process}
+WD=/cms_scratch/taehee/HerwigSample/hw_nEvt-${EVTpRUN}/MZp-${ZprimeMass}/gbb-${Coupling//./p}/${sample}/${process}
 
 # Herwig7 basic setups
 #ln -s $(which python3) $Singularity_Loc/.local/bin/python
