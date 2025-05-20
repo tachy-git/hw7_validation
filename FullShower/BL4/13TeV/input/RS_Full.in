@@ -1,69 +1,50 @@
 # -*- ThePEG-repository -*-
 
-### CMS commands ###
+##################################################
+## Herwig/Matchbox example input file
+##################################################
 
 ##################################################
-# Example generator based on LHC parameters
-# usage: Herwig read LHC.in
+## Collider type
 ##################################################
 read snippets/PPCollider.in
 
-### BSM commands ###
+# Set emission to POWHEG for radiation in decays
+#set /Herwig/Shower/ShowerHandler:HardEmission POWHEG
 
 ##################################################
-# Technical parameters for this run
+## BSM Particles
 ##################################################
-cd /Herwig/Generators
-
-##################################################
-# LHC physics parameters (override defaults here) 
-##################################################
-
 read FRModel.model
 
 cd /Herwig/NewPhysics
-
-#set TwoBodyDC:CreateDecayModes No
-#set ThreeBodyDC:CreateDecayModes No
-#set FourBodyDC:CreateDecayModes No
-#set WeakDecayConstructor:CreateDecayModes No
-
-# Force turn-off decay modes except Zp->mu-,mu+
-# This makes all Z' decay into dimuon, i.e. force Br(Z'->mu-,mu+) = 1, while log file says it's branching fraction is not 1. One should mention this or recalculate the final cross section
-#insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->e-,e+;
-#insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->tau-,tau+;
-#insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->nu_mu,nu_mu;
-#insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->nu_e,nu_e;
-#insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->nu_tau,nu_tau;
-#insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->d,dbar;
-#insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->u,ubar;
-#insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->s,sbar;
-#insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->c,cbar;
-#insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->b,bbar;
+set TwoBodyDC:CreateDecayModes No
+set ThreeBodyDC:CreateDecayModes No
+set FourBodyDC:CreateDecayModes No
+set WeakDecayConstructor:CreateDecayModes No
 
 # Particle property
 cd /Herwig/FRModel/Particles
-#set /Herwig/FRModel/Particles/Zp:Stable Stable
 
 set uuZpSplitFnEW:CouplingValue.Left.Im 0.00001
-set uuZpSplitFnEW:CouplingValue.Left.Re 0.0
+set uuZpSplitFnEW:CouplingValue.Left.Re 0.0 
 set uuZpSplitFnEW:CouplingValue.Right.Im 0.00001
-set uuZpSplitFnEW:CouplingValue.Right.Re 0.0
+set uuZpSplitFnEW:CouplingValue.Right.Re 0.0 
 set ddZpSplitFnEW:CouplingValue.Left.Im 0.6666666666666667 # x10
-set ddZpSplitFnEW:CouplingValue.Left.Re 0.0
+set ddZpSplitFnEW:CouplingValue.Left.Re 0.0 
 set ddZpSplitFnEW:CouplingValue.Right.Im 0.6666666666666667
-set ddZpSplitFnEW:CouplingValue.Right.Re 0.0
+set ddZpSplitFnEW:CouplingValue.Right.Re 0.0 
 set ssZpSplitFnEW:CouplingValue.Left.Im 0.00001
-set ssZpSplitFnEW:CouplingValue.Left.Re 0.0
+set ssZpSplitFnEW:CouplingValue.Left.Re 0.0 
 set ssZpSplitFnEW:CouplingValue.Right.Im 0.00001
-set ssZpSplitFnEW:CouplingValue.Right.Re 0.0
+set ssZpSplitFnEW:CouplingValue.Right.Re 0.0 
 set ccZpSplitFnEW:CouplingValue.Left.Im 0.00001
-set ccZpSplitFnEW:CouplingValue.Left.Re 0.0
+set ccZpSplitFnEW:CouplingValue.Left.Re 0.0 
 set ccZpSplitFnEW:CouplingValue.Right.Im 0.00001
-set ccZpSplitFnEW:CouplingValue.Right.Re 0.0
+set ccZpSplitFnEW:CouplingValue.Right.Re 0.0 
 
 
-### Private commands ###
+cd /Herwig/Shower
 
 ##################################################
 ## Process selection
@@ -80,14 +61,14 @@ set myReader:CacheFileName cache.tmp
 set myReader:MaxScan __NEVENTS__
 
 create ThePEG::LesHouchesEventHandler myLesHouchesHandler
-set myLesHouchesHandler:CascadeHandler       /Herwig/Shower/ShowerHandler
+set myLesHouchesHandler:CascadeHandler /Herwig/Shower/ShowerHandler
 set myLesHouchesHandler:HadronizationHandler /Herwig/Hadronization/ClusterHadHandler
-set myLesHouchesHandler:DecayHandler         /Herwig/Decays/DecayHandler
+set myLesHouchesHandler:DecayHandler /Herwig/Decays/DecayHandler
 
 insert myLesHouchesHandler:LesHouchesReaders 0 myReader
 set myLesHouchesHandler:PartonExtractor /Herwig/Partons/PPExtractor
-set myLesHouchesHandler:WeightOption NegUnitWeight
-# set myLesHouchesHandler:WeightOption VarNegWeight
+# set myLesHouchesHandler:WeightOption NegUnitWeight
+set myLesHouchesHandler:WeightOption VarNegWeight
 set myReader:WeightWarnings false
 
 ##################################################
@@ -117,8 +98,16 @@ set EventGenerator:RandomNumberGenerator:Seed __SEED__
 set EventGenerator:PrintEvent 1
 set EventGenerator:MaxErrors 10000
 
+##################################################
+# physics parameters
+##################################################
+
+cd /Herwig/Generators
 set EventGenerator:EventHandler:LuminosityFunction:Energy 13000.*GeV
-set EventGenerator:EventHandler /Herwig/EventHandlers/myLesHouchesHandler
+set EventGenerator:EventHandler:CascadeHandler:MPIHandler NULL
+set /Herwig/Shower/ShowerHandler:HardEmission 0
+set /Herwig/Shower/ShowerHandler:IntrinsicPtGaussian 2.2*GeV # add this line referencing LHC-FRModel.in
+#set /Herwig/Shower/PartnerFinder:QEDPartner IIandFF # Only for e+e- collider
 
 ##################################################
 ## Scale choice
@@ -132,31 +121,67 @@ set Factory:ScaleChoice Scales/SHatScale
 ## Matching and shower selection
 ##################################################
 
-read Matchbox/LO-DefaultShower.in
-# read Matchbox/MCatLO-DefaultShower.in
-# read Matchbox/MCatNLO-DefaultShower.in
+read Matchbox/MCatLO-DefaultShower.in
+#read Matchbox/MCatNLO-DefaultShower.in
 
+##################################################
+## Handlers
+##################################################
+
+cd /Herwig/Generators
+set EventGenerator:EventHandler /Herwig/EventHandlers/myLesHouchesHandler
+# set EventGenerator:EventHandler:CascadeHandler NULL
+set EventGenerator:EventHandler:HadronizationHandler NULL
+set EventGenerator:EventHandler:DecayHandler NULL
+set /Herwig/Analysis/Basics:CheckQuark 0
 set /Herwig/Shower/ShowerHandler:Interactions ALL
-set /Herwig/Shower/ShowerHandler:IntrinsicPtGaussian 2.2*GeV # add this line referencing LHC-FRModel.in
-#set /Herwig/Shower/PartnerFinder:QEDPartner IIandFF # Only for e+e- collider
+# set /Herwig/Particles/W-:Stable Stable
+# set /Herwig/Particles/W+:Stable Stable
+# set /Herwig/Particles/Z0:Stable Stable # Herwig: PhaseSpaceMode.h:254: void Herwig::PhaseSpaceMode::fillStack(): Assertion `rStack_.empty()' failed.\n Aborted (core dumped)
+#set /Herwig/Particles/h0:Stable Stable
+set /Herwig/Particles/t:Stable Stable
+set /Herwig/Particles/tbar:Stable Stable
+set EventGenerator:EventHandler:StatLevel Full
+
+set /Herwig/Model:EW/Scheme 7
+set /Herwig/Particles/Z0:NominalMass 91.18800
+set /Herwig/Particles/h0:NominalMass 125.0000
+set /Herwig/Particles/t:NominalMass 173.0000
+set /Herwig/Model:EW/AlphaEMMZ 0.0075467711139788835
+set /Herwig/Model:EW/FermiConstant 1.166390e-05
 
 ##################################################
-## prepare for Rivet analysis or HepMC output
-## when running with parton shower
+## Analyses
 ##################################################
-# Rivet analysis
+
 cd /Herwig/Analysis
 insert Rivet:Analyses 0 RAnalysis
 insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 Rivet
 
-# HepMC output 
+# HepMC output
 # read snippets/HepMC.in
 set /Herwig/Analysis/HepMC:PrintEvent __NEVENTS__
 insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 HepMC
 
 ##################################################
-# Save run for later usage with 'Herwig run'
+## prepare for Rivet analysis or HepMC output
+## when running with parton shower
 ##################################################
-cd /Herwig/Generators
+
+#read snippets/Rivet.in
+#insert /Herwig/Analysis/Rivet:Analyses 0 XXX_2015_ABC123
+#read snippets/HepMC.in # We cannot read this file because 'Matchbox/MCatLO-DefaultShower.in' file already creates /Herwig/Analysis/HepMC, which makes a duplication
+#set /Herwig/Analysis/HepMC:PrintEvent 10000
+#set /Herwig/Analysis/HepMC:Format GenEvent
+#set /Herwig/Analysis/HepMC:Units GeV_mm
+#insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 /Herwig/Analysis/HepMC
+
+##################################################
+## Save the generator
+##################################################
+
+#set /Herwig/Shower/ShowerHandler:LimitEmissions OneFinalStateEmission
 do /Herwig/MatrixElements/Matchbox/Factory:ProductionMode
+
+cd /Herwig/Generators
 saverun LHC EventGenerator
