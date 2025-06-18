@@ -26,16 +26,18 @@ namespace Rivet {
       // Projections
       declare(FinalState(), "FS");
 
-      book(_h_ptr,   "h_ptr",   50,0.,500.0);
-      book(_h_etar,  "h_etar",  20,-5.,5.);
-      book(_h_pti,   "h_pti",   50,0.,200.0);
-      book(_h_etai,  "h_etai",  20,-5.,5.);
-      book(_h_ptj,   "h_ptj",   50,0.,200.0);
-      book(_h_etaj,  "h_etaj",  20,-5.,5.0);
+	  book(_n_evt,	"n_evt",	10,0,10);
 
-      book(_h_dR_ri, "h_dR_ri", 40, 0., 4.);
-      book(_h_dR_rj, "h_dR_rj", 40, 0., 4.);
+      book(_h_pti,   "h_pti",   50,0.,200.0);
+      book(_h_etai,  "h_etai",  100,-5.,5.);
+      book(_h_ptj,   "h_ptj",   50,0.,200.0);
+      book(_h_etaj,  "h_etaj",  100,-5.,5.0);
+	  book(_h_phii, "h_phii", 64,0,6.4);
+	  book(_h_phij, "h_phij", 64,0,6.4);
+
       book(_h_dR_ij, "h_dR_ij", 40, 0., 4.);
+	  book(_h_dEta_ij, "h_dEta_ij", 50,0,5);
+	  book(_h_dPhi_ij, "h_dPhi_ij", 32,0,3.2);
 
       book(_h_m_ij,  "h_m_ij",  100,0.,500.);
 
@@ -44,6 +46,7 @@ namespace Rivet {
       book(_h_z,   "h_z",   100,0.,1.);
       //book(_n_h, "n_h", 1,0.,1.);
       //book(_s_h, "s_z_h", 50, 0.,1., 50, 0.,1.);
+
     }
 
     /// Perform the per-event analysis
@@ -52,6 +55,7 @@ namespace Rivet {
       const double weight = 1.;
 
       const FinalState& fs = applyProjection<FinalState>(event, "FS");
+
       Particle out, recoil, branch;
       vector<Particle> leg;
       int Nleg=0, NH=0;
@@ -80,7 +84,7 @@ namespace Rivet {
 		}
 		leg.push_back(qFinal);
 	  }
-
+	  _n_evt->fill(NH,weight);
       if( NH!=1 ) vetoEvent;
       if( leg[0].abspid()!=leg[1].abspid() ) {
         cout<<"[ERROR] The first two particles have different abs pdg id."<<endl;
@@ -88,7 +92,7 @@ namespace Rivet {
         vetoEvent;
       }
       if( abs(leg[0].eta()) > 5. || abs(leg[1].eta()) > 5. ) vetoEvent;
-      if( leg[0].pt() < 20. || leg[1].pt() < 20. ) vetoEvent;
+      //if( leg[0].pt() < 20. || leg[1].pt() < 20. ) vetoEvent;
       if( deltaR(leg[0].momentum(),leg[1].momentum()) < 0.4 ) vetoEvent;
 
       double pT2[2], z[2];
@@ -125,22 +129,27 @@ namespace Rivet {
         vetoEvent;
       }
 
+	  if( branch.pt()<20. ) vetoEvent;
+	  _n_evt->fill(5,weight);
+	  //if( leg[0].pt() >= 20. && leg[1].pt() >= 20. ) _n_evt->fill(6,weight);
+	  
       qT = sqrt(((branch.momentum()+out.momentum()).invariant()-sqr(m0))/zq/(1-zq));
 
       _h_pT->fill(pT);
       _h_qT->fill(qT);
       _h_z->fill(zq);
 
-      _h_ptr->fill(recoil.pt(),weight);
-      _h_etar->fill(recoil.eta(),weight);
       _h_pti->fill(branch.pt(),weight);
       _h_etai->fill(branch.eta(),weight);
       _h_ptj->fill(out.pt(),weight);
       _h_etaj->fill(out.eta(),weight);
+	  _h_phii->fill(branch.phi(),weight);
+	  _h_phij->fill(out.phi(),weight);
 
-      _h_dR_ri->fill(deltaR(recoil.momentum(),branch.momentum()),weight);
-      _h_dR_rj->fill(deltaR(recoil.momentum(),out.momentum()),weight);
-      _h_dR_ij->fill(deltaR(branch.momentum(),out.momentum()),weight);
+	  double dR = deltaR(branch.momentum(),out.momentum());
+      _h_dR_ij->fill(dR,weight);
+      _h_dEta_ij->fill(deltaEta(branch.momentum(),out.momentum()),weight);
+      _h_dPhi_ij->fill(deltaPhi(branch.momentum(),out.momentum()),weight);
 
       _h_m_ij->fill((branch.momentum()+out.momentum()).mass(),weight);
 
@@ -151,22 +160,24 @@ namespace Rivet {
 
     /// Normalise histograms etc., after the run
     void finalize() {
-      double weight = crossSection()/sumOfWeights()/femtobarn * numEvents()/5000.;
+      double weight = crossSection()/sumOfWeights()/femtobarn * numEvents()/20000.;
+
+	  scale(_n_evt, weight);
 
       scale(_h_pT, weight);
       scale(_h_qT, weight);
       scale(_h_z, weight);
 
-      scale(_h_ptr, weight );
-      scale(_h_etar, weight );
       scale(_h_pti, weight );
       scale(_h_etai, weight );
       scale(_h_ptj, weight );
       scale(_h_etaj, weight );
+      scale(_h_phii, weight );
+      scale(_h_phij, weight );
 
-      scale(_h_dR_ri, weight );
-      scale(_h_dR_rj, weight );
       scale(_h_dR_ij, weight );
+      scale(_h_dEta_ij, weight );
+      scale(_h_dPhi_ij, weight );
 
       scale(_h_m_ij, weight );
 
@@ -192,22 +203,27 @@ namespace Rivet {
 
     /// @name Histograms
     //@{
+	
+	Histo1DPtr _n_evt;
+
     Histo1DPtr _h_pT;
     Histo1DPtr _h_qT;
     Histo1DPtr _h_z;
 
-    Histo1DPtr _h_ptr;
-    Histo1DPtr _h_etar;
     Histo1DPtr _h_pti;
     Histo1DPtr _h_etai;
     Histo1DPtr _h_ptj;
     Histo1DPtr _h_etaj;
+    Histo1DPtr _h_phii;
+    Histo1DPtr _h_phij;
 
-    Histo1DPtr _h_dR_ri;
-    Histo1DPtr _h_dR_rj;
     Histo1DPtr _h_dR_ij;
+    Histo1DPtr _h_dEta_ij;
+    Histo1DPtr _h_dPhi_ij;
 
     Histo1DPtr _h_m_ij;
+
+
 
     //Histo1DPtr _n_h;
     //Histo2DPtr _s_h;
