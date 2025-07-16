@@ -19,8 +19,8 @@ sample=${3}
 ZprimeMass=${4}
 ZprimeWidth=${5}
 
-outputdir=/cms_scratch/taehee/HerwigSample/BL4/hw_nEvt-${EVTpRUN}/MZp-${ZprimeMass}_WZp-${ZprimeWidth}/${sample}/${process}
-WD=/cms_scratch/taehee/HerwigSample/BL4/hw_nEvt-${EVTpRUN}/MZp-${ZprimeMass}_WZp-${ZprimeWidth}/${sample}/${process}
+outputdir=/cms_scratch/taehee/HerwigSample/BL4/hw_nEvt-${EVTpRUN}/MZp-${ZprimeMass}/${sample}/${process}
+WD=/cms_scratch/taehee/HerwigSample/BL4/hw_nEvt-${EVTpRUN}/MZp-${ZprimeMass}/${sample}/${process}
 
 # Herwig7 basic setups
 #ln -s $(which python3) $Singularity_Loc/.local/bin/python
@@ -57,12 +57,12 @@ fi
 ###########
 mkdir -p ${WD}
 cd ${WD}
-cp /cms/ldap_home/taehee/HerwigWD/hw7_validation/FullShower/BL4/13TeV/RAnalysis.cc .
+cp /cms/ldap_home/taehee/HerwigWD/hw7_validation/FullShower/BL4_jet/13TeV/RAnalysis.cc .
 
 RB="$Singularity_Loc/bin/rivet-build"
 source "$Singularity_Loc/bin/activate"
 
-cp -r $Hw_Loc/hw7_validation/FullShower/BL4/13TeV/UFO/"MZp-${ZprimeMass}_WZp-${ZprimeWidth}"/* .
+cp -r $Hw_Loc/hw7_validation/FullShower/BL4_jet/13TeV/UFO/"MZp-${ZprimeMass}"/* .
 
 # compile rivet analysis
 echo "Compile the rivet analysis, RAnalysis.cc"
@@ -74,9 +74,9 @@ echo ""
 # run hw7
 echo "Start runnning ${1}.${process} (mg job # = ${sample})"
 rnum=$(shuf -i 1-99999999 -n 1)
-sed -e "s/__NEVENTS__/${EVTpRUN}/g" ${Hw_Loc}/hw7_validation/FullShower/BL4/13TeV/input/${ShowerSetting}.in > LHC.in
+sed -e "s/__NEVENTS__/${EVTpRUN}/g" ${Hw_Loc}/hw7_validation/FullShower/BL4_jet/13TeV/input/${ShowerSetting}.in > LHC.in
 sed -i "s/__SEED__/${rnum}/g" LHC.in
-sed -i "s/__DIR__/\/cms_scratch\/taehee\/HerwigSample\/BL4\/mg_nEvt-${EVTpRUN}\/MZp-${ZprimeMass}_WZp-${ZprimeWidth}\/${sample}\/${process}/g" LHC.in
+sed -i "s/__DIR__/\/cms_scratch\/taehee\/HerwigSample\/BL4\/mg_nEvt-${EVTpRUN}\/MZp-${ZprimeMass}\/${sample}\/${process}/g" LHC.in
 if [ "$ZprimeMass" -lt 9 ];then
     sed -i '43s/^/#/' LHC.in
 fi

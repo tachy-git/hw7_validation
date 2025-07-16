@@ -72,7 +72,7 @@ namespace Rivet {
 	  }
 	  Particles MEptls = ((qAnc.parents())[0]).children();
 	  for(const auto& q: MEptls){
-	  	if(q.abspid()!=1) continue;
+	  	if(q.abspid()>6) continue;
 		Particle qFinal = q;
 		while( qFinal.children().size()>0 ){
 			for(const auto& qChild: qFinal.children()){
@@ -84,20 +84,41 @@ namespace Rivet {
 		}
 		leg.push_back(qFinal);
 	  }
-	  _n_evt->fill(NH,weight);
+	  _n_evt->fill(0,weight);
       if( NH!=1 ) vetoEvent;
+	  _n_evt->fill(1,weight);
+	  if( leg.size()<1 ) vetoEvent;
+	  _n_evt->fill(2,weight);
+	  /*
       if( leg[0].abspid()!=leg[1].abspid() ) {
         cout<<"[ERROR] The first two particles have different abs pdg id."<<endl;
         cout<<"        Terminate running."<<endl;
         vetoEvent;
       }
-      if( abs(leg[0].eta()) > 5. || abs(leg[1].eta()) > 5. ) vetoEvent;
+	  */
+	  double m0, m1, m2;
+	  m2 = out.momentum().mass();
+	  double pT, zq, qT;
+	  for(const auto& l: leg){
+		if( l.abseta() > 5. ) vetoEvent;
+	  }
+	  _n_evt->fill(3,weight);
+      //if( abs(leg[0].eta()) > 5. || abs(leg[1].eta()) > 5. ) vetoEvent;
       //if( leg[0].pt() < 20. || leg[1].pt() < 20. ) vetoEvent;
+	  if( leg.size()==1 ){
+		branch = leg[0];
+		m1 = leg[0].momentum().mass();
+		FourMomentum p = leg[0].momentum()+out.momentum();
+		double absp3 = p.p();
+		FourMomentum n;
+		n.setT(1); n.setX(-p.x()/absp3); n.setY(-p.y()/absp3); n.setZ(-p.z()/absp3);
+		zq = leg[0].momentum()*n/(p*n);
+		pT = sqrt( zq*(1.-zq)*p.invariant()-(1.-zq)*sqr(m1)-zq*sqr(m2) );
+	  }
+	  else{
       if( deltaR(leg[0].momentum(),leg[1].momentum()) < 0.4 ) vetoEvent;
 
       double pT2[2], z[2];
-      double m0, m1, m2;
-      m2 = out.momentum().mass();
       for(unsigned i=0; i<2; i++) {
         m1 = leg[i].momentum().mass();
         FourMomentum p = leg[i].momentum()+out.momentum();
@@ -108,7 +129,6 @@ namespace Rivet {
         pT2[i] = z[i]*(1.-z[i])*p.invariant()-(1.-z[i])*sqr(m1)-z[i]*sqr(m2);
       }
 
-      double pT, zq, qT;
       if(pT2[0]>=0. && (pT2[0]<pT2[1] || pT2[1]<0.)) {
         branch = leg[0]; recoil = leg[1];
 	    pT = sqrt(pT2[0]);
@@ -119,6 +139,7 @@ namespace Rivet {
 	    pT = sqrt(pT2[1]);
 	    zq = z[1];
       }
+	  }
       if( branch.abspid() < 3 ) m0=0.325;
       else if( branch.abspid() == 3 ) m0=0.101;
       else if( branch.abspid() == 4 ) m0=1.27;
@@ -128,9 +149,8 @@ namespace Rivet {
         cout<<"[ERROR] quark mass is not defined. Veto this event."<<endl;
         vetoEvent;
       }
-
-	  if( branch.pt()<20. ) vetoEvent;
 	  _n_evt->fill(5,weight);
+
 	  //if( leg[0].pt() >= 20. && leg[1].pt() >= 20. ) _n_evt->fill(6,weight);
 	  
       qT = sqrt(((branch.momentum()+out.momentum()).invariant()-sqr(m0))/zq/(1-zq));
@@ -141,10 +161,15 @@ namespace Rivet {
 
       _h_pti->fill(branch.pt(),weight);
       _h_etai->fill(branch.eta(),weight);
+      _h_etai->fill(-1.*branch.eta(),weight);
       _h_ptj->fill(out.pt(),weight);
       _h_etaj->fill(out.eta(),weight);
+      _h_etaj->fill(-1.*out.eta(),weight);
 	  _h_phii->fill(branch.phi(),weight);
 	  _h_phij->fill(out.phi(),weight);
+
+	  if( branch.pt()<30. ) vetoEvent;
+	  _n_evt->fill(6,weight);
 
 	  double dR = deltaR(branch.momentum(),out.momentum());
       _h_dR_ij->fill(dR,weight);
