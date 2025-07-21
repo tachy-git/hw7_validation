@@ -58,35 +58,61 @@ namespace Rivet {
 
       Particle out, recoil, branch;
       vector<Particle> leg;
-      int Nleg=0, NH=0;
-      // find particles
+
+      // find events with Z'
+      // and save Z' as 'out'
+      // note that we will focus on events with only one Z'
+      int NZp = 0;
       for(const Particle& p : fs.particles()) {
         if(p.pid()==9900032) {
           out = p;
-          NH++;
+          NZp++;
         }
       }
+      _n_evt->fill(0,weight);
+      if( NZp!=1 ) vetoEvent;
+      _n_evt->fill(1,weight);
+
+      // find ancestor parton of Z'
+      // and save it as 'qAnc'
 	  Particle qAnc = out;
 	  while( qAnc.parents().size()==1 ){
-		qAnc = (qAnc.parents())[0];
+        Particle qAncTmp = (qAnc.parents())[0];
+        if( qAncTmp.abspid()<7 )
+            qAnc = qAncTmp;
+        else
+            break;
 	  }
+      // find leg particles
+      // --> find parton candidate that might radiate Z'
+      // and save its final state as 'leg'
+      // here, MEptls are particles that are...
+      // (in MG) outgoing ptls from the hard scattering --> two partons and one Z'
+      // (in HW FSR) outgoing ptls from the hard scattering --> two partons
+      // (in HW ISR) incoming ptl that will radiate Z' and a ghost ptl with pid 82 --> one parton and one ghost
 	  Particles MEptls = ((qAnc.parents())[0]).children();
 	  for(const auto& q: MEptls){
+        // only check quarks
 	  	if(q.abspid()>6) continue;
+
+        // find a final state
 		Particle qFinal = q;
 		while( qFinal.children().size()>0 ){
+            bool findChild = false;
 			for(const auto& qChild: qFinal.children()){
 				if( q.pid() == qChild.pid() ){
 					qFinal = qChild;
+                    findChild = true;
 					break;
 					}
 			}
+            // to avoid an infinite loop
+            // in ISR, quark-antiquark pair can be create a glu glu pair
+            // in this case, while loop does not end.
+            if( !findChild ) break;
 		}
 		leg.push_back(qFinal);
 	  }
-	  _n_evt->fill(0,weight);
-      if( NH!=1 ) vetoEvent;
-	  _n_evt->fill(1,weight);
 	  if( leg.size()<1 ) vetoEvent;
 	  _n_evt->fill(2,weight);
 	  /*
@@ -161,10 +187,8 @@ namespace Rivet {
 
       _h_pti->fill(branch.pt(),weight);
       _h_etai->fill(branch.eta(),weight);
-      _h_etai->fill(-1.*branch.eta(),weight);
       _h_ptj->fill(out.pt(),weight);
       _h_etaj->fill(out.eta(),weight);
-      _h_etaj->fill(-1.*out.eta(),weight);
 	  _h_phii->fill(branch.phi(),weight);
 	  _h_phij->fill(out.phi(),weight);
 
