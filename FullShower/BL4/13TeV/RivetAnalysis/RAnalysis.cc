@@ -76,6 +76,13 @@ namespace Rivet {
       // find ancestor parton of Z'
       // and save it as 'qAnc'
 	  Particle qAnc = out;
+      while( qAnc.parents().size()==1 ){
+        Particle qAncTmp = (qAnc.parents())[0];
+        if( qAncTmp.pid() == 9900032 )
+            qAnc = qAncTmp;
+        else
+            break;
+      }
 	  while( qAnc.parents().size()==1 ){
         Particle qAncTmp = (qAnc.parents())[0];
         if( qAncTmp.abspid()<7 )
