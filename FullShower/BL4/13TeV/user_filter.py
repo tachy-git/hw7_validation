@@ -1,5 +1,5 @@
 import madgraph.core.drawing as drawing
-  
+
 def remove_diag(diag, model):
 
 	draw = drawing.FeynmanDiagram(diag, model)
@@ -16,30 +16,36 @@ def remove_diag(diag, model):
 			return False
 
 	# ===========================================
-	# filter feynman diagrams
-	# modify removeDiag to filter the diags
-	# removeDiag = True: only radiated zp
-	# removeDiag = False: reverse
+	# Filter feynman diagrams in p p > j j zp process
+	# Please modify 'flagType' to among FSR/ ISR/ FSN
+	# FSRLike:	Z' is radiated from the outgoing quark
+	# 			Z' line is not connected to T-channel line
+	#			and connected to one external quark line
+	# ISRLike:	Diagram looks like that Z' is from the incoming quark
+	# FSNLike:	Diagram looks like a trident(?) with Z' in the middle
+	# 			Z' is connected to two T-channel quarks line
 	# ===========================================
-	removeDiag = True
 	zpPid = 9900032
+	flagType = "FSR" # FSR/ ISR/ FSN
+	diagType = None
 
 	for p in draw.lineList:
 		if p.id != zpPid: continue
-		noExternal = True
+		nTchannel = 0
+		nExternal = 0
 		for vtx in [p.begin, p.end]:
 			for p2 in vtx.lines:
-				# 1 Check whether zprime connects to t-channel
 				if p2.begin.level==1 and p2.end.level==1:
-					return removeDiag
-
-				# 2 Check whether zprime only connects to internal quark line
-				# to remove hard scattered Zp connected to s-channel quark
+					nTchannel += 1
 				if not (p2.id)<7: continue
 				if len(p2.begin.lines)==1 or len(p2.end.lines)==1:
-					noExternal = False
+					nExternal += 1
 
-		if noExternal:
-			return removeDiag
+		if nExternal == 1 and nTchannel == 0:
+			diagType = "FSR"
+		elif nTchannel == 2:
+			diagType = "FSN"
+		else:
+			diagType = "ISR"
 
-	return not removeDiag
+	return flagType != diagType
