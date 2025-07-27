@@ -11,281 +11,277 @@
 namespace Rivet {
 
 
-  class RAnalysis : public Analysis {
-  public:
+	class RAnalysis : public Analysis {
+		public:
 
-    /// Constructor
-    RAnalysis()
-      : Analysis("RAnalysis")
-    {    }
+			/// Constructor
+			RAnalysis()
+				: Analysis("RAnalysis")
+			{    }
 
-    /// @name Analysis methods
-    //@{
+			/// @name Analysis methods
+			//@{
 
-    /// Book histograms and initialise projections before the run
-    void init() {
-      // Projections
-      declare(FinalState(), "FS");
-      declare(FastJets(FinalState(), FastJets::ANTIKT, 0.4), "Jets");
+			/// Book histograms and initialise projections before the run
+			void init() {
+				// Projections
+				declare(FinalState(), "FS");
+				declare(FastJets(FinalState(), FastJets::ANTIKT, 0.4), "Jets");
 
-	  book(_n_evt,	"n_evt",	10,0,10);
-	  book(_n_mu,	"n_mu",	10,0,10);
-	  book(_n_mu_all,	"n_mu_all",	10,0,10);
-	  book(_n_mu_injet,	"n_mu_injet",	10,0,10);
+				book(_n_evt,	"n_evt",	10,0,10);
 
-      book(_h_pt_jet,   "h_pt_jet",   40,0.,200.0);
-      book(_h_pt_muon,   "h_pt_muon",   100,0.,100.);
-      book(_h_pt_zp,   "h_pt_zp",   40,0.,200.0);
-      book(_h_pt_zp_nocut,   "h_pt_zp_nocut",   40,0.,200.0);
-      book(_h_pt_branch,   "h_pt_branch",   40,0.,200.0);
-      book(_h_pt_lmu,   "h_pt_lmu",   100,0.,100.);
-      book(_h_pt_smu,   "h_pt_smu",   100,0.,100.);
-      book(_h_pt_cmu1,   "h_pt_cmu1",   100,0.,100.);
-      book(_h_pt_cmu2,   "h_pt_cmu2",   100,0.,100.);
+				book(_h_pt_branch,   "h_pt_branch",   40,0.,200.0);
+				//book(_h_pt_branchQ,   "h_pt_branchQ",   40,0.,200.0);
+				book(_h_pt_jet,   "h_pt_jet",   40,0.,200.0);
+				book(_h_pt_mu,   "h_pt_mu",   100,0.,100.);
+				book(_h_pt_lmu,   "h_pt_lmu",   100,0.,100.);
+				book(_h_pt_smu,   "h_pt_smu",   100,0.,100.);
 
-      book(_h_eta_zp,  "h_eta_zp",  100,-5.,5.);
-      book(_h_eta_zp_nocut,  "h_eta_zp_nocut",  100,-5.,5.);
+        /*book(_h_dR_qzp, "h_dR_qzp", 40, 0., 4.);
+        book(_h_dR_qlmu, "h_dR_qlmu", 40, 0., 4.);
+        book(_h_dR_qsmu, "h_dR_qsmu", 40, 0., 4.);
+        book(_h_dR_qmu, "h_dR_qmu", 40, 0., 4.);
+        */
 
-      book(_h_dR_jz, "h_dR_jz", 40, 0., 4.);
-      book(_h_dR_jz_nocut, "h_dR_jz_nocut", 40, 0., 4.);
-      book(_h_dR_jlmu, "h_dR_jlmu", 40, 0., 4.);
-      book(_h_dR_jsmu, "h_dR_jsmu", 40, 0., 4.);
-      book(_h_dR_jcmu1, "h_dR_jcmu1", 40, 0., 4.);
-      book(_h_dR_jcmu2, "h_dR_jcmu2", 40, 0., 4.);
+				book(_h_dR_jzp, "h_dR_jzp", 40, 0., 4.);
+				book(_h_dR_jlmu, "h_dR_jlmu", 40, 0., 4.);
+				book(_h_dR_jsmu, "h_dR_jsmu", 40, 0., 4.);
+				book(_h_dR_jmu, "h_dR_jmu", 40, 0., 4.);
 
-      book(_h_invm1,  "h_invm1",  40,0.,20.);
-      book(_h_invm2,  "h_invm2",  40,0.,20.);
+				book(_h_invm1,  "h_invm1",  40,0.,20.);
 
-      //book(_n_h, "n_h", 1,0.,1.);
-      //book(_s_h, "s_z_h", 50, 0.,1., 50, 0.,1.);
+			}
 
-    }
+			/// Perform the per-event analysis
+			void analyze(const Event& event) {
+				//setup analysis
+				const double weight = 1.;
 
-    /// Perform the per-event analysis
-    void analyze(const Event& event) {
-      //setup analysis
-      const double weight = 1.;
+				const FinalState& fs = applyProjection<FinalState>(event, "FS");
+				const Particles& allPtls = event.allParticles();
+				const FastJets& alljets = applyProjection<FastJets>(event, "Jets");
+				const Jets& ptjets = alljets.jetsByPt(0.*GeV);
 
-      const FinalState& fs = applyProjection<FinalState>(event, "FS");
-      const Particles& allPtls = event.allParticles();
-      const FastJets& alljets = applyProjection<FastJets>(event, "Jets");
-      const Jets& ptjets = alljets.jetsByPt(0.*GeV);
+        //========================================
+        // Find Zprime
+        // focus on evts w/ only one Zprime
+        //========================================
+				int NZp=0;
+        int ZpPid = 9900032;
+				//Particle out;
+				for(const Particle& p : allPtls) {
+					if( p.pid()==ZpPid && !p.hasChildWith(Cuts::abspid==ZpPid) ){
+						//out = p; 
+						NZp++;
+					}
+				}
+				_n_evt->fill(0, weight);
+				if( NZp!=1 ) vetoEvent;
+				_n_evt->fill(1, weight);
 
-      int NZp=0;
-      // find particles
-      Particle out;
-      for(const Particle& p : allPtls) {
-        if( p.pid()==9900032 && !p.hasChildWith(Cuts::abspid==9900032) ){
-          out = p; 
-          NZp++;
+        //========================================
+        // Find final state quarks(from ME)
+        // and save them as legs
+        //========================================
+        /*
+        Particles outgoingPtls, legs;
+				for(const auto& p: allPtls){
+          auto gp = p.genParticle();
+          if( !gp ) continue;
+          auto vtx = gp->production_vertex();
+          if( !vtx ) continue;
+          if( vtx->particles_in().size()==2 && vtx->particles_out().size()>1 ){
+            if( p.abspid()<7 ) outgoingPtls.push_back(p);
+          }
+          if( outgoingPtls.size()==2 ) break;
+				}
+        for(const auto& p: outgoingPtls){
+          Particle pFinal = p;
+          while( pFinal.children().size()==1 ){
+            Particle pChild = (pFinal.children())[0];
+            if( pFinal.pid() == pChild.pid() ) pFinal = pChild;
+          }
+          legs.push_back(pFinal);
         }
-      }
-	  _n_evt->fill(0,weight);
-      if( NZp!=1 ) vetoEvent;
-	  _n_evt->fill(1,weight);
-	  // ////////////////////////
-	  // This is for the selecting same phase space both for FO and RS sample
-	  // only works for RS sample, not for FO sample
-	  for(const auto &p: ((out.parents())[0].parents())[0].children() ){
-          if( p.pid() == 9900032 ) continue;
-          if( p.pt()<20. )  vetoEvent;
-      }
-	  _n_evt->fill(2,weight);
-	  ///////////////////////////
-	  _h_pt_zp_nocut -> fill(out.pt(), weight);
-      _h_eta_zp_nocut -> fill(out.eta(), weight);
+        */
+        //========================================
+        // Event selection
+        // Jet: pT > 30 GeV && |eta| < 2.4
+        // OS Muon: pT > 10 GeV && |eta| < 2.4
+        //========================================
+				Particle mu1, mu2, lmu, smu; bool b_mu1 = false; bool b_mu2 = false;
+				for(const Particle& p : fs.particles()) {
+					if(p.pt() > 10.&&p.abseta()<2.4) {
+						if(p.pid()==13&&!b_mu1) {
+							mu1=p; b_mu1 = true;
+						}
+						else if(p.pid()==-13&&!b_mu2) {
+							mu2=p; b_mu2 = true;
+						}
+					}
+					if( b_mu1 && b_mu2 ) break;
+				}
+				if( !(b_mu1 && b_mu2) ) vetoEvent;
+				_n_evt->fill(2, weight);
 
-      Jets jets;
-      for(const auto& j: ptjets){
-          if( j.abseta() > 2.4 ) continue;
-          _h_pt_jet -> fill(j.pt(), weight);
-          jets.push_back(j);
-      }
-      Particles muons, muons_all;
-      for(const auto& p: fs.particles()){
-          //if( p.abspid()==13 && p.abseta()<2.4 && p.hasAncestorWith(Cuts::abspid==9900032,false) )
-          if( p.abspid()==13 && p.abseta()<2.4 ){
-              muons_all.push_back(p);
-              _h_pt_muon -> fill(p.pt(), weight);
-			  if( p.pt()>10. ) muons.push_back(p);
+        //========================================
+        // Main analyis part
+        //========================================
+        // Part0: Zprime reconstruction
+				if(mu1.pt()>mu2.pt()) { lmu=mu1; smu=mu2; }
+				else { lmu=mu2; smu=mu1; }
+
+				const FourMomentum Zp = mu1.momentum() + mu2.momentum();
+
+        _h_pt_mu->fill(mu1.pt(), weight);
+        _h_pt_mu->fill(mu2.pt(), weight);
+        _h_pt_lmu->fill(lmu.pt(), weight);
+        _h_pt_smu->fill(smu.pt(), weight);
+        _h_invm1->fill((mu1.momentum()+mu2.momentum()).mass(), weight);
+
+        // Part1: Gen Analysis
+        /*
+        Particle branchQ;
+        if( legs.size()==1 ) branchQ = legs[0];
+        else if( legs.size()==2 ){
+          // check pT2
+          double pT2[2], z[2];
+          for(unsigned i=0; i<2; i++) {
+            double m1 = legs[i].momentum().mass();
+            FourMomentum p = legs[i].momentum() + Zp;
+            double absp3 = p.p();
+            FourMomentum n;
+            n.setT(1); n.setX(-p.x()/absp3); n.setY(-p.y()/absp3); n.setZ(-p.z()/absp3);
+            z[i] = legs[i].momentum()*n/(p*n);
+            pT2[i] = z[i]*(1.-z[i])*p.invariant()-(1.-z[i])*sqr(m1)-z[i]*sqr(m2);
           }
-      }
-	  _n_mu_all -> fill(muons_all.size(), weight);
-	  _n_mu -> fill(muons.size(), weight);
 
-      double dRjz = 999;
-      Jet branch;
-      for(const auto& j: jets){
-          double dR = deltaR(j.momentum(), out.momentum());
-          if( dR<dRjz ){
-              dRjz = dR;
-              branch = j;
+          if(pT2[0]>=0. && (pT2[0]<pT2[1] || pT2[1]<0.)) {
+            branchQ = legs[0]; //recoil = legs[1];
+            //pT = sqrt(pT2[0]);
+            //zq = z[0];
           }
-      }
-      if( dRjz == 999 ) vetoEvent; // no jet for branch candidate
-      _n_evt -> fill(3, weight);
-      _h_dR_jz_nocut -> fill(dRjz, weight);
-      _h_pt_branch -> fill(branch.pt(), weight);
-	  int Nmu_injet = 0;
-	  for(const auto& m: muons){
-		if( deltaR(branch.momentum(), m.momentum())<0.4 ){
-			Nmu_injet++;
-		}
-	  }
-	  _n_mu_injet -> fill(Nmu_injet, weight);
-
-      if( branch.pt()<30. ) vetoEvent;
-      _n_evt -> fill(4, weight);
-      if ( muons.size() < 2 ) vetoEvent;
-      _n_evt -> fill(5, weight);
-
-      _h_dR_jz -> fill(dRjz, weight);
-      _h_pt_zp -> fill(out.pt(), weight);
-      _h_eta_zp -> fill(out.eta(), weight);
-
-      Particle lmu, smu, cmu1, cmu2; // leading, sub-leading, closest, second closest
-      double ptMax1 = -999, ptMax2 = -999;
-      double dRMin1 = 999, dRMin2 = 999;
-      for(const auto& m: muons){
-          double pt = m.pt();
-          double dR = deltaR(out.momentum(), m.momentum());
-          if( pt > ptMax1 ){
-              ptMax2 = ptMax1;
-              smu = lmu;
-              ptMax1 = pt;
-              lmu = m;
+          else {
+            branchQ = legs[1]; //recoil = legs[0];
+            //pT = sqrt(pT2[1]);
+            //zq = z[1];
           }
-          else if( pt > ptMax2 ){
-              ptMax2 = pt;
-              smu = m;
-          }
-          if( dR < dRMin1 ){
-              dRMin2 = dRMin1;
-              cmu2 = cmu1;
-              dRMin1 = dR;
-              cmu1 = m;
-          }
-          else if( dR < dRMin2 ){
-              dRMin2 = dR;
-              cmu2 = m;
-          }
-      }
-      _h_pt_lmu -> fill(lmu.pt(), weight);
-      _h_pt_smu -> fill(smu.pt(), weight);
-      _h_pt_cmu1 -> fill(cmu1.pt(), weight);
-      _h_pt_cmu2 -> fill(cmu2.pt(), weight);
-      _h_dR_jlmu -> fill(deltaR(branch.momentum(),lmu.momentum()), weight);
-      _h_dR_jsmu -> fill(deltaR(branch.momentum(),smu.momentum()), weight);
-      _h_dR_jcmu1 -> fill(deltaR(branch.momentum(),cmu1.momentum()), weight);
-      _h_dR_jcmu2 -> fill(deltaR(branch.momentum(),cmu2.momentum()), weight);
+        }
+        if( legs.size()>0 ){
+          _h_pt_branchQ->fill(branchQ.pt(), weight);
+          _h_dR_qzp->fill(deltaR(branchQ.momentum(),Zp));
+          _h_dR_qmu->fill(deltaR(branchQ.momentum(),lmu.momentum()));
+          _h_dR_qmu->fill(deltaR(branchQ.momentum(),smu.momentum()));
+          _h_dR_qlmu->fill(deltaR(branchQ.momentum(),lmu.momentum()));
+          _h_dR_qsmu->fill(deltaR(branchQ.momentum(),smu.momentum()));
+        }
+        */
 
-      Particle recoZp1 = Particle(9900032, lmu.momentum()+smu.momentum());
-      _h_invm1 -> fill(recoZp1.mass(), weight);
-      Particle recoZp2 = Particle(9900032, cmu1.momentum()+cmu2.momentum());
-      _h_invm2 -> fill(recoZp2.mass(), weight);
+        // Part2: Jet Analysis
+				Jets jets; Jet branch;
+				double dr = 999.;
+				for(const auto& j: ptjets) {
+					if( !(j.abseta() < 2.4 && j.pt() > 30.) ) continue;
+					_h_pt_jet->fill(j.pt());
+					jets.push_back(j);
+					double dr_ = deltaR(j.momentum(), Zp);
+					if( dr_ < dr ) {
+						dr = dr_;
+						branch = j;
+					}
+				}
+				_h_pt_branch->fill(branch.pt(), weight);
+				_h_dR_jzp->fill(dr, weight);
+				_h_dR_jmu->fill(deltaR(branch.momentum(),lmu.momentum()), weight);
+				_h_dR_jmu->fill(deltaR(branch.momentum(),smu.momentum()), weight);
+				_h_dR_jlmu->fill(deltaR(branch.momentum(),lmu.momentum()), weight);
+				_h_dR_jsmu->fill(deltaR(branch.momentum(),smu.momentum()), weight);
+			}
 
-    }
+			/// Normalise histograms etc., after the run
+			void finalize() {
+				double weight = crossSection()/sumOfWeights()/femtobarn * numEvents()/20000.;
 
-    /// Normalise histograms etc., after the run
-    void finalize() {
-      double weight = crossSection()/sumOfWeights()/femtobarn * numEvents()/20000.;
+				scale(_n_evt, weight);
 
-	  scale(_n_evt, weight);
-	  scale(_n_mu, weight);
-	  scale(_n_mu_all, weight);
-	  scale(_n_mu_injet, weight);
+				scale(_h_pt_branch, weight);
+				//scale(_h_pt_branchQ, weight);
+				scale(_h_pt_jet, weight);
+				scale(_h_pt_mu, weight);
+				scale(_h_pt_lmu, weight);
+				scale(_h_pt_smu, weight);
 
-	  scale(_h_pt_jet, weight);
-	  scale(_h_pt_muon, weight);
-	  scale(_h_pt_zp, weight);
-	  scale(_h_pt_zp_nocut, weight);
-	  scale(_h_pt_branch, weight);
-	  scale(_h_pt_lmu, weight);
-	  scale(_h_pt_smu, weight);
-	  scale(_h_pt_cmu1, weight);
-	  scale(_h_pt_cmu2, weight);
+        /*
+				scale(_h_dR_qzp, weight);
+				scale(_h_dR_qlmu, weight);
+				scale(_h_dR_qsmu, weight);
+				scale(_h_dR_qmu, weight);
+        */
 
-	  scale(_h_eta_zp, weight);
-	  scale(_h_eta_zp_nocut, weight);
+        scale(_h_dR_jzp, weight);
+        scale(_h_dR_jlmu, weight);
+        scale(_h_dR_jsmu, weight);
+        scale(_h_dR_jmu, weight);
 
-	  scale(_h_dR_jz, weight);
-	  scale(_h_dR_jz_nocut, weight);
-	  scale(_h_dR_jlmu, weight);
-	  scale(_h_dR_jsmu, weight);
-	  scale(_h_dR_jcmu1, weight);
-	  scale(_h_dR_jcmu2, weight);
+				scale(_h_invm1, weight);
 
-	  scale(_h_invm1, weight);
-	  scale(_h_invm2, weight);
+				//normalize(_s_h);
+				// data file
+				std::ofstream file;
+				string fname = "RAnalysis.dat";
+				file.open(fname.c_str());
+				//for(unsigned int ix=0;ix<_scatter_h.size();++ix) {
+				//  file << _scatter_h[ix].first << " " <<  _scatter_h[ix].second << "\n";
+				//}
+				file << "PLOT\n";
+				file.close();
+			}
 
-
-
-
-      //normalize(_s_h);
-      // data file
-      std::ofstream file;
-      string fname = "RAnalysis.dat";
-      file.open(fname.c_str());
-      //for(unsigned int ix=0;ix<_scatter_h.size();++ix) {
-      //  file << _scatter_h[ix].first << " " <<  _scatter_h[ix].second << "\n";
-      //}
-      file << "PLOT\n";
-      file.close();
-    }
-
-    //@}
+			//@}
 
 
-  private:
+		private:
 
 
-    // Data members like post-cuts event weight counters go here
+			// Data members like post-cuts event weight counters go here
 
 
-    /// @name Histograms
-    //@{
-	
-	Histo1DPtr _n_evt;
-	Histo1DPtr _n_mu;
-	Histo1DPtr _n_mu_all;
-	Histo1DPtr _n_mu_injet;
+			/// @name Histograms
+			//@{
 
-	Histo1DPtr _h_pt_jet;
-	Histo1DPtr _h_pt_muon;
-	Histo1DPtr _h_pt_zp;
-	Histo1DPtr _h_pt_zp_nocut;
-	Histo1DPtr _h_pt_branch;
-	Histo1DPtr _h_pt_lmu;
-	Histo1DPtr _h_pt_smu;
-	Histo1DPtr _h_pt_cmu1;
-	Histo1DPtr _h_pt_cmu2;
+			Histo1DPtr _n_evt;
 
-	Histo1DPtr _h_eta_zp;
-	Histo1DPtr _h_eta_zp_nocut;
+			Histo1DPtr _h_pt_branch;
+			//Histo1DPtr _h_pt_branchQ;
+			Histo1DPtr _h_pt_jet;
+			Histo1DPtr _h_pt_mu;
+			Histo1DPtr _h_pt_lmu;
+			Histo1DPtr _h_pt_smu;
 
-	Histo1DPtr _h_dR_jz;
-	Histo1DPtr _h_dR_jz_nocut;
-	Histo1DPtr _h_dR_jlmu;
-	Histo1DPtr _h_dR_jsmu;
-	Histo1DPtr _h_dR_jcmu1;
-	Histo1DPtr _h_dR_jcmu2;
+      /*
+			Histo1DPtr _h_dR_qzp;
+			Histo1DPtr _h_dR_qlmu;
+			Histo1DPtr _h_dR_qsmu;
+			Histo1DPtr _h_dR_qmu;
+      */
 
-	Histo1DPtr _h_invm1;
-	Histo1DPtr _h_invm2;
+      Histo1DPtr _h_dR_jzp;
+      Histo1DPtr _h_dR_jlmu;
+      Histo1DPtr _h_dR_jsmu;
+      Histo1DPtr _h_dR_jmu;
+
+			Histo1DPtr _h_invm1;
+
+
+			//@}
+
+			//vector<pair<double,double> > _scatter_h;
+	};
 
 
 
-
-
-    //@}
-
-    //vector<pair<double,double> > _scatter_h;
-  };
-
-
-
-  // The hook for the plugin system
-  DECLARE_RIVET_PLUGIN(RAnalysis);
+	// The hook for the plugin system
+	DECLARE_RIVET_PLUGIN(RAnalysis);
 
 
 }
