@@ -11,15 +11,14 @@
 #############
 ### setup ###
 #############
-Hw_Loc=/cms/ldap_home/taehee/HerwigWD/
-Singularity_Loc=$Hw_Loc
+Hw_Loc=/cms/ldap_home/taehee/HerwigWD
 UFOName="B-L-4_UFO"
 ZprimeMass=${1}
 
 ###############
 ### compile ###
 ###############
-source "$Singularity_Loc/bin/activate"
+source "$Hw_Loc/bin/activate"
 
 compileDir="MZp-${ZprimeMass}"
 rm -rf $compileDir
@@ -34,11 +33,15 @@ echo "Compiling UFO for model ${UFOName} with MZp ${ZprimeMass}..."
 # change parameter settting
 sed -i "159s/1500/${ZprimeMass}/" ${UFOName}/parameters.py
 #sed -i "311s/80./${ZprimeWidth}/" ${UFOName}/parameters.py
-export PYTHONPATH=$PWD/$UFOName:$PYTHONPATH
 #mv $compileDir/FR_Parameters.py $UFOName
-ufo2herwig ${UFOName} --enable-bsm-shower --convert
+export PYTHONPATH="$(pwd):$PYTHONPATH"
+export PYTHONPATH="$(pwd)/${UFOName}:$PYTHONPATH"
+
+ufo2herwig "${UFOName}" --enable-bsm-shower --convert
+
 # turn off unrelatd splitting function
 sed -i "s/echo \*.cc/echo FRModel*.cc/g" Makefile
 sed -i "54,72s/^/#/" FRModel.model
 sed -i "146,254s/^/#/" FRModel.model
+
 make

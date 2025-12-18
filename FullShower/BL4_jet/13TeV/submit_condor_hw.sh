@@ -1,15 +1,24 @@
 #!/bin/bash
 
-SHOWERS=("RS_One" "RS_Full" "FO_woPS" "FO_wPS")
-SAMPLES=("Pt-20_ppjj_5431915" "Pt-20_2J_5431951")
-SHOWERS=("RS_Full" "FO_wPS")
-SAMPLES=("Pt-20_2J_5431962")
-SHOWERS=("FO_wPS")
-SAMPLES=("Pt-20_2J_5457070")
+SAMPLES=("Pt-40_ppjj_6358513" "Pt-40_ppjj_6358521" "Pt-40_ppjj_6358527" "Pt-40_ppjj_6358528")
+SAMPLES=("Pt-80_ppjj_6359494" "Pt-80_ppjj_6360140" "Pt-80_ppjj_6363472" "Pt-80_ppjj_6363473")
+SAMPLES=("Pt-100_ppjj_6359495" "Pt-100_ppjj_6360141" "Pt-100_ppjj_6363474")
+SAMPLES=("Pt-150_ppjj_6359496" "Pt-150_ppjj_6360142" "Pt-150_ppjj_6363475" "Pt-150_ppjj_6363476")
+SAMPLES=("Pt-40_ppjj_6367593")
+SAMPLES=("Pt-80_ppjj_6367594")
+SAMPLES=("Pt-100_ppjj_6367595")
+SAMPLES=("Pt-150_ppjj_6367596")
+SAMPLES=("Pt-60_ppjj_6355276" "Pt-60_ppjj_6355395" "Pt-60_ppjj_6355537")
+#SAMPLES=("Pt-80_ppjj_6359494" "Pt-80_ppjj_6360140" "Pt-80_ppjj_6363472" "Pt-80_ppjj_6363473" "Pt-80_ppjj_6367594")
+SAMPLES=("Pt-100_ppjj_6360141" "Pt-100_ppjj_6363474" "Pt-100_ppjj_6367595" "Pt-100_ppjj_6359495")
+#SAMPLES=("Pt-80_ppjj_6367594")
+#SAMPLES=("Pt-120_ppjj_6355277" "Pt-120_ppjj_6355396" "Pt-120_ppjj_6355538")
+SAMPLES=("Pt-120_ppjj_6355396" "Pt-120_ppjj_6355538")
+SHOWERS=("RS_Full")
+SAMPLES=("Pt-40_ppjj_6358513" "Pt-40_ppjj_6358521")
+SAMPLES=("Pt-40_ppjj_6358528")
 
-zpmass=10
-#shower="FO_wPS"
-#available shower setting: RS_One, RS_Full, FO_woPS, FO_wPS
+ZPMASSES=(6 7)
 
 cat <<EOT > submit_condor_hw.txt
 universe        = vanilla
@@ -25,15 +34,20 @@ should_transfer_files = YES
 getenv = True
 EOT
 
+mkdir -p joblog
+
 for ((i=0; i<${#SAMPLES[@]}; i++)); do
+for ((m=0; m<${#ZPMASSES[@]}; m++)); do
+    zpmass=${ZPMASSES[m]}
     sample=${SAMPLES[i]}
-	shower=${SHOWERS[i]}
+    #shower=${SHOWERS[i]}
+    shower="RS_Full"
     echo "Submitting $queue jobs for HW with MG job number $sample with Zprime mass $zpmass, coupling $coupling"
-	rm -rf /cms_scratch/taehee/HerwigSample/BL4/hw_nEvt-20000/MZp-${zpmass}/$sample
-    queue=$(ls /cms_scratch/taehee/HerwigSample/BL4/mg_nEvt-20000/MZp-${zpmass}/$sample | wc -l)
-	condor_submit submit_condor_hw.txt \
-	-append "arguments = $shower \$(Process) $sample $zpmass" \
-	-append "JobBatchName = ${shower}_MZp-${zpmass}_$sample" \
-	-append "queue $queue"
-	sleep 1
+    queue=5000
+    condor_submit submit_condor_hw.txt \
+    -append "arguments = $shower \$(Process) $sample $zpmass" \
+    -append "JobBatchName = ${shower}_MZp-${zpmass}_$sample" \
+    -append "queue $queue"
+    sleep 1
+done
 done

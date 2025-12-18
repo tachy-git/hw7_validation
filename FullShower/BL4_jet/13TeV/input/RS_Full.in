@@ -37,29 +37,29 @@ insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->b,bbar;
 # Particle property
 cd /Herwig/FRModel/Particles
 
-set uuZpSplitFnEW:CouplingValue.Left.Im 0.6666666666666667
+set uuZpSplitFnEW:CouplingValue.Left.Im __COUPLING__
 set uuZpSplitFnEW:CouplingValue.Left.Re 0.0 
-set uuZpSplitFnEW:CouplingValue.Right.Im 0.6666666666666667
+set uuZpSplitFnEW:CouplingValue.Right.Im __COUPLING__
 set uuZpSplitFnEW:CouplingValue.Right.Re 0.0 
-set ddZpSplitFnEW:CouplingValue.Left.Im 0.6666666666666667 # x10
+set ddZpSplitFnEW:CouplingValue.Left.Im __COUPLING__ # x10
 set ddZpSplitFnEW:CouplingValue.Left.Re 0.0 
-set ddZpSplitFnEW:CouplingValue.Right.Im 0.6666666666666667
+set ddZpSplitFnEW:CouplingValue.Right.Im __COUPLING__
 set ddZpSplitFnEW:CouplingValue.Right.Re 0.0 
-set ssZpSplitFnEW:CouplingValue.Left.Im 0.6666666666666667
+set ssZpSplitFnEW:CouplingValue.Left.Im __COUPLING__
 set ssZpSplitFnEW:CouplingValue.Left.Re 0.0 
-set ssZpSplitFnEW:CouplingValue.Right.Im 0.6666666666666667
+set ssZpSplitFnEW:CouplingValue.Right.Im __COUPLING__
 set ssZpSplitFnEW:CouplingValue.Right.Re 0.0 
-set ccZpSplitFnEW:CouplingValue.Left.Im 0.6666666666666667
+set ccZpSplitFnEW:CouplingValue.Left.Im __COUPLING__
 set ccZpSplitFnEW:CouplingValue.Left.Re 0.0 
-set ccZpSplitFnEW:CouplingValue.Right.Im 0.6666666666666667
+set ccZpSplitFnEW:CouplingValue.Right.Im __COUPLING__
 set ccZpSplitFnEW:CouplingValue.Right.Re 0.0 
-set bbZpSplitFnEW:CouplingValue.Left.Im 0.6666666666666667
+set bbZpSplitFnEW:CouplingValue.Left.Im __COUPLING__
 set bbZpSplitFnEW:CouplingValue.Left.Re 0.0
-set bbZpSplitFnEW:CouplingValue.Right.Im 0.6666666666666667
+set bbZpSplitFnEW:CouplingValue.Right.Im __COUPLING__
 set bbZpSplitFnEW:CouplingValue.Right.Re 0.0
-set ttZpSplitFnEW:CouplingValue.Left.Im 0.6666666666666667
+set ttZpSplitFnEW:CouplingValue.Left.Im __COUPLING__
 set ttZpSplitFnEW:CouplingValue.Left.Re 0.0
-set ttZpSplitFnEW:CouplingValue.Right.Im 0.6666666666666667
+set ttZpSplitFnEW:CouplingValue.Right.Im __COUPLING__
 set ttZpSplitFnEW:CouplingValue.Right.Re 0.0
 
 
