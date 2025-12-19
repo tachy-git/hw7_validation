@@ -19,6 +19,7 @@ ShowerSetting=${1}
 process=${2}
 sample=${3}
 ZprimeMass=${4}
+com=${5}
 
 # Herwig7 basic setups
 #ln -s $(which python3) $Singularity_Loc/.local/bin/python
@@ -42,22 +43,34 @@ start=$(( process * 10 ))
 end=$(( start + 9 ))
 
 for ((i=start; i<=end; i++)); do
-outputdir=/cms_scratch/taehee/HerwigSample/BL4/hw_nEvt-${EVTpRUN}/MZp-${ZprimeMass}/${sample}/${i}
-if [[ ! -f "${outputdir}/LHC.hepmc" ]]; then
-    echo "${outputdir}/LHC.hepmc not exists..."
-    continue
-elif [[ -f "${outputdir}/LHC_filter.hepmc" ]]; then
-    echo "${outputdir}/LHC_filter.hepmc already exists..."
-    continue
+outputdir=/cms_scratch/taehee/HerwigSample/BL4_$com/hw_nEvt-${EVTpRUN}/MZp-${ZprimeMass}/${sample}/${i}
+
+if [[ ! -f "${outputdir}/LHC.yoda" ]]; then
+  echo ${outputdir}/LHC.yoda does not exist...
+  echo Job for herwig run might be terminated unexpectedly, and this might make a problem
+  echo Exit
+  exit
 fi
+if [[ ! -f "${outputdir}/LHC.hepmc" ]]; then
+  echo ${outputdir}/LHC.hepmc does not exist...
+  echo Nothing to filter
+  echo Exit
+  exit
+fi
+if [[ -f "${outputdir}/LHC_filter.hepmc" ]]; then
+  echo ${outputdir}/LHC_filter.hepmc already exists...
+  echo This might be the incomplete one
+  rm "${outputdir}/LHC_filter.hepmc"
+fi
+
 cd $outputdir
 echo $outputdir
 
 cp /cms/ldap_home/taehee/HerwigWD/hw7_validation/FullShower/BL4_jet/13TeV/filter.py .
-rm LHC_filter.hepmc
 python3 filter.py
 rm filter.py
-if [[ -f "${outputdir}/LHC.hepmc" ]]; then
+if [[ -f "${outputdir}/LHC_filter.hepmc" ]]; then
+    echo Filtering has ended successfully!
     echo remove ${outputdir}/LHC.hepmc
     rm LHC.hepmc
 fi
