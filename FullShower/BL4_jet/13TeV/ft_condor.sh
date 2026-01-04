@@ -48,14 +48,12 @@ outputdir=/cms_scratch/taehee/HerwigSample/BL4_$com/hw_nEvt-${EVTpRUN}/MZp-${Zpr
 if [[ ! -f "${outputdir}/LHC.yoda" ]]; then
   echo ${outputdir}/LHC.yoda does not exist...
   echo Job for herwig run might be terminated unexpectedly, and this might make a problem
-  echo Exit
-  exit
+  continue
 fi
 if [[ ! -f "${outputdir}/LHC.hepmc" ]]; then
   echo ${outputdir}/LHC.hepmc does not exist...
   echo Nothing to filter
-  echo Exit
-  exit
+  continue
 fi
 if [[ -f "${outputdir}/LHC_filter.hepmc" ]]; then
   echo ${outputdir}/LHC_filter.hepmc already exists...
