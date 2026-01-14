@@ -389,6 +389,10 @@ namespace Rivet {
               _h_dR_jdimu -> fill( deltaR(jet.momentum(), dimuon) );
               _h_dR_jlmu  -> fill( deltaR(jet.momentum(), lmu.momentum()) );
               _h_dR_jsmu  -> fill( deltaR(jet.momentum(), smu.momentum()) );
+              _h_f_dR_mumu  -> fill( deltaR(lmu.momentum(), smu.momentum()) );
+              _h_f_dR_jdimu -> fill( deltaR(jet.momentum(), dimuon) );
+              _h_f_dR_jlmu  -> fill( deltaR(jet.momentum(), lmu.momentum()) );
+              _h_f_dR_jsmu  -> fill( deltaR(jet.momentum(), smu.momentum()) );
 
               if( sampleTag == "FO" || sampleTag == "RS" ){
                 _h_pt_zp  -> fill( zp.pt() );
@@ -400,6 +404,11 @@ namespace Rivet {
                 _h_dR_qlmu  -> fill( deltaR(partner.momentum(), lmu.momentum()) );
                 _h_dR_qsmu  -> fill( deltaR(partner.momentum(), smu.momentum()) );
                 _h_dR_jzp   -> fill( deltaR(jet.momentum(), zp.momentum()) );
+                _h_f_dR_qzp   -> fill( deltaR(partner.momentum(), zp.momentum()) );
+                _h_f_dR_qdimu -> fill( deltaR(partner.momentum(), dimuon) );
+                _h_f_dR_qlmu  -> fill( deltaR(partner.momentum(), lmu.momentum()) );
+                _h_f_dR_qsmu  -> fill( deltaR(partner.momentum(), smu.momentum()) );
+                _h_f_dR_jzp   -> fill( deltaR(jet.momentum(), zp.momentum()) );
               }
               // For now, only count the leading case
               vetoEvent;
