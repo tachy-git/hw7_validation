@@ -1,74 +1,119 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#set -euo pipefail
 
 #############
 ### setup ###
 #############
-
-Hw_Loc=/cms/ldap_home/taehee/HerwigWD/
-Singularity_Loc=$Hw_Loc
+Hw_Loc="/cms/ldap_home/taehee/HerwigWD"
+Singularity_Loc="$Hw_Loc"
 MG_version="MG5_aMC_v3_5_1"
 #MG_version="MG5_aMC_v3_3_2"
 
 nevents=20000
-
 MG="$Hw_Loc/opt/$MG_version/bin/mg5_aMC"
-ptj=${3}
-com=${4}
-if [ "$com" = "13TeV" ]; then
-  ebeam=6500
-elif [ "$com" = "13p6TeV" ]; then
-  ebeam=6800
-else
-  echo "c.o.m. is set to be $com... terminate the job"
+
+jobtag1="${1:?missing arg1}"
+jobtag2="${2:?missing arg2}"
+generation="${3:?missing generation (RS|FO)}"
+zpmass="${4:?missing zpmass}"
+ptj="${5:?missing ptj}"
+com="${6:?missing com (13TeV|13p6TeV)}"
+
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+###############
+### physics ###
+###############
+ebeam=""
+case "$com" in
+  13TeV)   ebeam=6500 ;;
+  13p6TeV) ebeam=6800 ;;
+  *) die "Unknown com='$com' (expected 13TeV or 13p6TeV)" ;;
+esac
+
+zpwidth=""
+if [[ "$generation" == "FO" ]]; then
+  case "$zpmass" in
+    5)  zpwidth="0.03026" ;;
+    20) zpwidth="0.1307"  ;;
+    50) zpwidth="0.3271"  ;;
+    *)  die "Unsupported zpmass='$zpmass' for FO" ;;
+  esac
 fi
 
+###############
+### output  ###
+###############
+base="/cms_scratch/taehee/HerwigSample/BL4_${com}/${generation}/mg_nEvt-${nevents}"
+case "$generation" in
+  RS) outputdir="${base}/Pt-${ptj}_ppjj_${jobtag1}/${jobtag2}" ;;
+  FO) outputdir="${base}/Pt-${ptj}_MZp-${zpmass}_${jobtag1}/${jobtag2}" ;;
+  *)  die "Unknown generation='$generation' (expected RS or FO)" ;;
+esac
 
-outputdir=/cms_scratch/taehee/HerwigSample/BL4_$com/mg_nEvt-$nevents/Pt-${ptj}_ppjj_${1}/${2}
-WD=$outputdir
-mkdir -p ${WD}
-cd ${WD}
+mkdir -p "$outputdir"
+cd "$outputdir"
 echo "Working Directory >> $outputdir"
 
-# Herwig7 basic setups
+#########################
+### environment setup ###
+#########################
 export PATH="$Singularity_Loc/.pyenv/bin:$PATH"
-export PYENV_ROOT=$Singularity_Loc/.pyenv
-export PATH=$PYENV_ROOT/bin:$PATH
+export PYENV_ROOT="$Singularity_Loc/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
-export LD_LIBRARY_PATH=$Singularity_Loc/opt/$MG_version/HEPTools/lhapdf6_py3//lib:$LD_LIBRARY_PATH
-export PYTHONPATH=/cms/ldap_home/taehee/.local/lib/python3.8/site-packages:$PYTHONPATH
-pip install --upgrade pip
-python -m pip install six --user
+export LD_LIBRARY_PATH="$Singularity_Loc/opt/$MG_version/HEPTools/lhapdf6_py3/lib:${LD_LIBRARY_PATH:-}"
+export PYTHONPATH="/cms/ldap_home/taehee/.local/lib/python3.8/site-packages:${PYTHONPATH:-}"
+python -m pip install --upgrade pip
+python -m pip install --user six
 
-
+###############
+### MG run  ###
+###############
 MG_File="MG_setup.dat"
-echo "set auto_update 0"                    >> $MG_File
-echo "import model B-L-4_UFO" >> $MG_File
-echo "define q = u s d c u~ s~ d~ c~" >> $MG_File
-echo "generate p p > q q @1" >> $MG_File
-echo "add process p p > q g @2" >> $MG_File
-echo "output madevent mg" >> $MG_File
-echo "launch" >> $MG_File
-echo "set nevents $nevent" >> $MG_File
-echo "set ebeam $ebeam" >> $MG_File
-echo "set etaj 3." >> $MG_File
-echo "set ptj $ptj" >> $MG_File
-echo "set drjj 0.4" >> $MG_File
-#echo "set Mzp" >> $MG_File
-#echo "set Wzp" >> $MG_File
-echo "set cut_decays True" >> $MG_File
-echo "set xptl 30." >> $MG_File
-echo "set ptl 10." >> $MG_File
-echo "set etal 3." >> $MG_File
-echo "set drjl 0." >> $MG_File
-echo "set drll 0." >> $MG_File
-rnum=$(shuf -i 1-99999999 -n 1)
-echo "set iseed $rnum" >> $MG_File
-echo "set use_syst False" >> $MG_File
-$MG $MG_File
+: > "$MG_File"  # truncate
 
-cp mg/Events/run_01/unweighted_events.lhe.gz $outputdir
-cp $MG_File $outputdir
+{
+  echo "set auto_update 0"
+  echo "import model B-L-4_UFO"
 
-rm -rf mg
+  if [[ "$generation" == "RS" ]]; then
+    echo "define q = u s d c u~ s~ d~ c~"
+    echo "generate p p > q q @1"
+    echo "add process p p > q g @2"
+  else
+    echo "generate p p > zp j j, zp > mu+ mu-"
+  fi
+
+  echo "output madevent mg"
+  echo "launch"
+  echo "set nevents $nevents"
+  echo "set ebeam $ebeam"
+  echo "set etaj 3."
+  echo "set ptj $ptj"
+  echo "set drjj 0.4"
+
+  if [[ "$generation" == "FO" ]]; then
+    echo "set Mzp $zpmass"
+    echo "set Wzp $zpwidth"
+    echo "set cut_decays True"
+    echo "set xptl 30."
+    echo "set ptl 3."
+    echo "set etal 3."
+    echo "set drjl 0."
+    echo "set drll 0."
+  fi
+
+  rnum="$(shuf -i 1-99999999 -n 1)"
+  echo "set iseed $rnum"
+  echo "set use_syst False"
+} >> "$MG_File"
+
+"$MG" "$MG_File"
+
+cp "mg/Events/run_01/unweighted_events.lhe.gz" "$outputdir/"
+cp "$MG_File" "$outputdir/"
+
+rm -rf "mg"
