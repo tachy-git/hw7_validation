@@ -318,11 +318,11 @@ namespace Rivet {
         // =======================================
         // GEN level study
         // =======================================
-        if( partner.pt() < 30. || partner.abseta() > 2.4 ) vetoEvent;
+        if( partner.pt() < __QUARKPTCUT__ || partner.abseta() > 2.4 ) vetoEvent;
         Particles muons;
         for(const auto& p: fs.particles()){
           if( p.abspid() != 13 )  continue;
-          if( p.pt() < 10. )      continue;
+          if( p.pt() < 5. )      continue;
           if( p.abseta() > 2.4 )  continue;
           muons.push_back(p);
         }
@@ -330,6 +330,7 @@ namespace Rivet {
         std::sort(muons.begin(),muons.end(),[](const Particle& a,const Particle& b){return a.pt()>b.pt();});
 
         Particle lmu = muons[0]; Particle smu = muons[1];
+        if( lmu.pt() < 52. ) vetoEvent;
         const FourMomentum dimuon = lmu.momentum() + smu.momentum();
         double invm = dimuon.mass();
 
