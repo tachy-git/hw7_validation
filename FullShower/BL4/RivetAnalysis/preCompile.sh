@@ -9,44 +9,17 @@
 # This script does
 # 1. Copy RAnalysis.cc code while subsituting some variables
 #    This should be done OUTSIDE a singularity image to have a write permission.
-#    Change "compile" to false
 # 2. Build the rivet code
 #    This should be done INSIDE a singularity image.
-#    Change "compile" to true
 # 3. After building the rivet code, you can submit condor jobs by
 #    ./submit_condor_rv.sh
 # I couldn't find the better way to run rivet...
 ########################################################################
 
-compile=true
-
 #############
 ### setup ###
 #############
-Hw_Loc="/cms/ldap_home/taehee/HerwigWD"
-Singularity_Loc="$Hw_Loc"
 WD=$(pwd -P)
-
-#########################
-### environment setup ###
-#########################
-if $compile; then
-export PATH=$Singularity_Loc/.local/bin:$PATH
-export LIBTOOL=$Singularity_Loc/.local/bin/libtool
-export LIBTOOLIZE=$Singularity_Loc/.local/bin/libtoolize
-export ACLOCAL_PATH=$Singularity_Loc/.local/share/aclocal:$ACLOCAL_PATH
-export PATH="$Singularity_Loc/.pyenv/bin:$PATH"
-export PYENV_ROOT=$Singularity_Loc/.pyenv
-export PATH=$PYENV_ROOT/bin:$PATH
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-export PYTHONUSERBASE=$Singularity_Loc/.pyenv
-export PATH=$PYTHONUSERBASE/bin:$PATH
-export LDFLAGS="-L$Singularity_Loc/.local/lib"
-export CPPFLAGS="-I$Singularity_Loc/.local/include"
-export PKG_CONFIG_PATH="$Singularity_Loc/.local/lib/pkgconfig"
-fi
 
 #############################
 ### Rivet helper function ###
@@ -60,29 +33,54 @@ run_rivet() {
   outputdir="preCompiled_${generation}_${lpt}_${spt}"
 
   # prepare the compilation
-  if ! $compile; then
-    if [[ -d $outputdir ]]; then
-      rm -rf $outputdir
-    fi
-    mkdir $outputdir
-    cd $outputdir
-    cp -f "../RAnalysis_template.cc" RAnalysis.cc
-    sed -i "s/__SAMPLETAG__/${generation}/g" RAnalysis.cc
-    sed -i -e "s/__LPT__/${lpt}/g" -e "s/__SPT__/${spt}/g" RAnalysis.cc
-
-  # do the compilation (inside a singularity)
-  else
-    cd $outputdir
-    source "$Singularity_Loc/bin/activate"
-    rivet-build Rivet.so RAnalysis.cc
-
+  if [[ -d $outputdir ]]; then
+    rm -rf $outputdir
   fi
+  mkdir $outputdir
+  cd $outputdir
+  cp -f "../RAnalysis_template.cc" RAnalysis.cc
+  sed -i "s/__SAMPLETAG__/${generation}/g" RAnalysis.cc
+  sed -i -e "s/__LPT__/${lpt}/g" -e "s/__SPT__/${spt}/g" RAnalysis.cc
+
+  HISTOCFG="$WD/histoCfg.txt"
+
+  HISTOPTR_BLOCK="$(awk '
+    NF==0 {next}
+    $1 ~ /^#/ {next}
+    {printf("  Histo1DPtr _%s;\n", $1)}
+  ' "$HISTOCFG")"
+
+  BOOKHISTO_BLOCK="$(awk '
+    NF==0 {next}
+    $1 ~ /^#/ {next}
+    {printf("    book(_%s, \"%s\", %s, %s, %s);\n", $1, $1, $2, $3, $4)}
+  ' "$HISTOCFG")"
+
+  SCALEHISTO_BLOCK="$(awk '
+    NF==0 {next}
+    $1 ~ /^#/ {next}
+    {printf("    scale(_%s, weight);\n", $1)}
+  ' "$HISTOCFG")"
+
+  HISTOPTR_BLOCK="$(awk 'NF && $1 !~ /^#/ {printf("       Histo1DPtr _%s;\n", $1)}' "$HISTOCFG")"
+  BOOKHISTO_BLOCK="$(awk 'NF && $1 !~ /^#/ {printf("        book(_%s, \"%s\", %d, %s, %s);\n", $1, $1, int($2), $3, $4)}' "$HISTOCFG")"
+  SCALEHISTO_BLOCK="$(awk 'NF && $1 !~ /^#/ {printf("       scale(_%s, weight);\n", $1)}' "$HISTOCFG")"
+  HISTOPTR_BLOCK="$HISTOPTR_BLOCK" \
+  BOOKHISTO_BLOCK="$BOOKHISTO_BLOCK" \
+  SCALEHISTO_BLOCK="$SCALEHISTO_BLOCK" \
+  perl -0777 -i -pe '
+    s/__HISTOPTR__/$ENV{HISTOPTR_BLOCK}/g;
+    s/__BOOKHISTO__/$ENV{BOOKHISTO_BLOCK}/g;
+    s/__SCALEHISTO__/$ENV{SCALEHISTO_BLOCK}/g;
+  ' RAnalysis.cc
+
+
+  echo cd $outputdir
+  echo rivet-build Rivet.so RAnalysis.cc
+  echo cd ..
 }
 
 ##################
 ### Rivet run  ###
 ##################
-run_rivet FO 32 13
 run_rivet FO 52 5
-run_rivet RS 32 13
-run_rivet RS 52 5

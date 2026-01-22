@@ -28,58 +28,8 @@ namespace Rivet {
         declare(FinalState(), "FS");
         declare(FastJets(FinalState(), FastJets::ANTIKT, 0.4), "Jets");
 
-        book(_n_evt,    "n_evt",   10,0,10);
-        book(_n_zp,    "n_zp",   5,0,5);
+__BOOKHISTO__
 
-        book(_h_pt_zp, "h_pt_zp",   500,0.,1000.);
-        book(_h_pt_q, "h_pt_q",   500,0.,1000.);
-        book(_h_pt_j, "h_pt_j",   500,0.,1000.);
-        book(_h_pt_lmu, "h_pt_lmu",   500,0.,1000.);
-        book(_h_pt_smu, "h_pt_smu",   500,0.,1000.);
-
-        book(_h0_pt_lm, "h0_pt_lm",   500,0.,1000.);
-        book(_h0_pt_sm, "h0_pt_sm",   500,0.,1000.);
-        book(_h0_pt_leadjet, "h0_pt_leadjet",   500,0.,1000.);
-        book(_h0_pt_closest, "h0_pt_closest",   500,0.,1000.);
-
-        book(_h_eta_zp, "h_eta_zp", 50, -5, 5);
-        book(_h_eta_q, "h_eta_q", 50, -5, 5);
-        book(_h_eta_j, "h_eta_j", 24, -2.4, 2.4);
-        book(_h_eta_lmu, "h_eta_lmu", 24, -2.4, 2.4);
-        book(_h_eta_smu, "h_eta_smu", 24, -2.4, 2.4);
-
-        book(_h_dR_mumu, "h_dR_mumu", 40,0,4.);
-        book(_h_dR_qzp, "h_dR_qzp", 40,0,4.);
-        book(_h_dR_qdimu, "h_dR_qdimu", 40,0,4.);
-        book(_h_dR_qlmu, "h_dR_qlmu", 40,0,4.);
-        book(_h_dR_qsmu, "h_dR_qsmu", 40,0,4.);
-        book(_h_dR_jzp, "h_dR_jzp", 40,0,4.);
-        book(_h_dR_jdimu, "h_dR_jdimu", 40,0,4.);
-        book(_h_dR_jlmu, "h_dR_jlmu", 40,0,4.);
-        book(_h_dR_jsmu, "h_dR_jsmu", 40,0,4.);
-
-        book(_h0_dR_leadjet_lm, "h0_dR_leadjet_lm", 40,0,4.);
-        book(_h0_dR_leadjet_sm, "h0_dR_leadjet_sm", 40,0,4.);
-        book(_h0_dR_closest_lm, "h0_dR_closest_lm", 40,0,4.);
-        book(_h0_dR_closest_sm, "h0_dR_closest_sm", 40,0,4.);
-
-        book(_h_f_dR_mumu, "h_f_dR_mumu", 50,0,0.5);
-        book(_h_f_dR_qzp, "h_f_dR_qzp", 50,0,0.5);
-        book(_h_f_dR_qdimu, "h_f_dR_qdimu", 50,0,0.5);
-        book(_h_f_dR_qlmu, "h_f_dR_qlmu", 50,0,0.5);
-        book(_h_f_dR_qsmu, "h_f_dR_qsmu", 50,0,0.5);
-        book(_h_f_dR_jzp, "h_f_dR_jzp", 50,0,0.5);
-        book(_h_f_dR_jdimu, "h_f_dR_jdimu", 50,0,0.5);
-        book(_h_f_dR_jlmu, "h_f_dR_jlmu", 50,0,0.5);
-        book(_h_f_dR_jsmu, "h_f_dR_jsmu", 50,0,0.5);
-
-        book(_h0_f_dR_leadjet_lm, "h0_f_dR_leadjet_lm", 50,0,0.5);
-        book(_h0_f_dR_leadjet_sm, "h0_f_dR_leadjet_sm", 50,0,0.5);
-        book(_h0_f_dR_closest_lm, "h0_f_dR_closest_lm", 50,0,0.5);
-        book(_h0_f_dR_closest_sm, "h0_f_dR_closest_sm", 50,0,0.5);
-
-        book(_h_invm_1, "h_invm_1", 80, 0, 80);
-        book(_h_invm_2, "h_invm_2", 400, 0, 20);
       }
       Particles findZprimes(const Particles& allptc){
         Particles zps;
@@ -378,6 +328,20 @@ namespace Rivet {
         if(!foundDimuon) vetoEvent;
         _h0_pt_lm->fill(lm.pt());
         _h0_pt_sm->fill(sm.pt());
+        _h0_eta_lm->fill(lm.eta());
+        _h0_eta_sm->fill(sm.eta());
+
+        double dr = -999;
+        Particle realmu;
+        for(const auto& m: muons){
+          if( m.pt() < 5. || m.abseta() > 2.4 ) continue;
+          if( m.hasAncestorWith(Cuts::abspid==zp_pid,false) ){
+            realmu = m;
+            break;
+          }
+        }
+        _h0_pt_realmu->fill(realmu.pt());
+        _h0_eta_realmu->fill(realmu.eta());
 
         Jet leadjet;
         bool foundLeadJet = false;
@@ -389,11 +353,44 @@ namespace Rivet {
           break;
         }
         if(foundLeadJet){
+          dr = deltaR(leadjet.momentum(),realmu.momentum());
           _h0_pt_leadjet->fill(leadjet.pt());
+          _h0_eta_leadjet->fill(leadjet.eta());
           _h0_dR_leadjet_lm->fill(deltaR(leadjet.momentum(), lm.momentum()));
           _h0_f_dR_leadjet_lm->fill(deltaR(leadjet.momentum(), lm.momentum()));
           _h0_dR_leadjet_sm->fill(deltaR(leadjet.momentum(), sm.momentum()));
           _h0_f_dR_leadjet_sm->fill(deltaR(leadjet.momentum(), sm.momentum()));
+          _h0_f_dR_mumu->fill(deltaR(lm.momentum(), sm.momentum()));
+          _h0_f_dR_leadjet_realmu->fill(dr);
+          _h0_pt_zp->fill(zp.pt());
+          _h0_eta_zp->fill(zp.eta());
+          _h0_pt_q->fill(partner.pt());
+          _h0_eta_q->fill(partner.eta());
+
+          _h0_dphi_leadjet_lm->fill(deltaPhi(leadjet.momentum(),lm.momentum()));
+          _h0_deta_leadjet_lm->fill(deltaEta(leadjet.momentum(),lm.momentum()));
+          if( deltaR(leadjet.momentum(), lm.momentum()) < 0.2 ){
+            _h0_pt_leadjet_less->fill(leadjet.pt());
+            _h0_dR_qzp_less->fill(deltaR(partner.momentum(),zp.momentum()));
+            _h0_pt_q_less->fill(partner.pt());
+            _h0_pt_zp_less->fill(zp.pt());
+            _h0_eta_q_less->fill(partner.eta());
+            _h0_eta_zp_less->fill(zp.eta());
+            cout << "[less]zp " << std::scientific << std::setprecision(16) << zp.px() << endl;
+            cout << "[less]pq " << std::scientific << std::setprecision(16) << partner.px() << endl;
+            cout << "[less]lm " << std::scientific << std::setprecision(16) << lm.px() << " " << lm.hasAncestorWith(Cuts::abspid==zp_pid,false) << endl;
+          }
+          else if( deltaR(leadjet.momentum(), lm.momentum()) < 0.3){
+            _h0_pt_leadjet_more->fill(leadjet.pt());
+            _h0_dR_qzp_more->fill(deltaR(partner.momentum(),zp.momentum()));
+            _h0_pt_q_more->fill(partner.pt());
+            _h0_pt_zp_more->fill(zp.pt());
+            _h0_eta_q_more->fill(partner.eta());
+            _h0_eta_zp_more->fill(zp.eta());
+            cout << "[more] " << std::scientific << std::setprecision(16) << zp.px() << endl;
+            cout << "[more]pq " << std::scientific << std::setprecision(16) << partner.px() << endl;
+            cout << "[more]lm " << std::scientific << std::setprecision(16) << lm.px() << " " << lm.hasAncestorWith(Cuts::abspid==zp_pid,false) << endl;
+          }
         }
         double minDR = 999.;
         Jet closest;
@@ -410,6 +407,7 @@ namespace Rivet {
         }
         if(foundClosestJet){
           _h0_pt_closest->fill(closest.pt());
+          _h0_eta_closest->fill(closest.eta());
           _h0_dR_closest_lm->fill(minDR);
           _h0_f_dR_closest_lm->fill(minDR);
           _h0_dR_closest_sm->fill(deltaR(closest.momentum(), sm.momentum()));
@@ -504,51 +502,7 @@ namespace Rivet {
         norm = (double)numEvents() / 20000.;
         double weight = crossSection()/sumOfWeights()/femtobarn * norm;
 
-        scale(_n_evt, weight);
-        scale(_n_zp, weight);
-        scale(_h_pt_zp, weight);
-        scale(_h_pt_q, weight);
-        scale(_h_pt_j, weight);
-        scale(_h_pt_lmu, weight);
-        scale(_h_pt_smu, weight);
-        scale(_h_eta_zp, weight);
-        scale(_h_eta_q, weight);
-        scale(_h_eta_j, weight);
-        scale(_h_eta_lmu, weight);
-        scale(_h_eta_smu, weight);
-        scale(_h_dR_mumu, weight);
-        scale(_h_dR_qzp, weight);
-        scale(_h_dR_qdimu, weight);
-        scale(_h_dR_qlmu, weight);
-        scale(_h_dR_qsmu, weight);
-        scale(_h_dR_jzp, weight);
-        scale(_h_dR_jdimu, weight);
-        scale(_h_dR_jlmu, weight);
-        scale(_h_dR_jsmu, weight);
-        scale(_h_f_dR_mumu, weight);
-        scale(_h_f_dR_qzp, weight);
-        scale(_h_f_dR_qdimu, weight);
-        scale(_h_f_dR_qlmu, weight);
-        scale(_h_f_dR_qsmu, weight);
-        scale(_h_f_dR_jzp, weight);
-        scale(_h_f_dR_jdimu, weight);
-        scale(_h_f_dR_jlmu, weight);
-        scale(_h_f_dR_jsmu, weight);
-        scale(_h_invm_1, weight);
-        scale(_h_invm_2, weight);
-
-        scale(_h0_pt_lm,weight);
-        scale(_h0_pt_sm,weight);
-        scale(_h0_pt_leadjet,weight);
-        scale(_h0_pt_closest,weight);
-        scale(_h0_dR_leadjet_lm,weight);
-        scale(_h0_dR_leadjet_sm,weight);
-        scale(_h0_dR_closest_lm,weight);
-        scale(_h0_dR_closest_sm,weight);
-        scale(_h0_f_dR_leadjet_lm,weight);
-        scale(_h0_f_dR_leadjet_sm,weight);
-        scale(_h0_f_dR_closest_lm,weight);
-        scale(_h0_f_dR_closest_sm,weight);
+__SCALEHISTO__
 
         // data file
         std::ofstream file;
@@ -568,51 +522,7 @@ namespace Rivet {
 
       /// @name Histograms
       //@{
-      Histo1DPtr _n_evt;
-      Histo1DPtr _n_zp;
-      Histo1DPtr _h_pt_zp;
-      Histo1DPtr _h_pt_q;
-      Histo1DPtr _h_pt_j;
-      Histo1DPtr _h_pt_lmu;
-      Histo1DPtr _h_pt_smu;
-      Histo1DPtr _h_eta_zp;
-      Histo1DPtr _h_eta_q;
-      Histo1DPtr _h_eta_j;
-      Histo1DPtr _h_eta_lmu;
-      Histo1DPtr _h_eta_smu;
-      Histo1DPtr _h_dR_mumu;
-      Histo1DPtr _h_dR_qzp;
-      Histo1DPtr _h_dR_qdimu;
-      Histo1DPtr _h_dR_qlmu;
-      Histo1DPtr _h_dR_qsmu;
-      Histo1DPtr _h_dR_jzp;
-      Histo1DPtr _h_dR_jdimu;
-      Histo1DPtr _h_dR_jlmu;
-      Histo1DPtr _h_dR_jsmu;
-      Histo1DPtr _h_f_dR_mumu;
-      Histo1DPtr _h_f_dR_qzp;
-      Histo1DPtr _h_f_dR_qdimu;
-      Histo1DPtr _h_f_dR_qlmu;
-      Histo1DPtr _h_f_dR_qsmu;
-      Histo1DPtr _h_f_dR_jzp;
-      Histo1DPtr _h_f_dR_jdimu;
-      Histo1DPtr _h_f_dR_jlmu;
-      Histo1DPtr _h_f_dR_jsmu;
-      Histo1DPtr _h_invm_1;
-      Histo1DPtr _h_invm_2;
-
-      Histo1DPtr _h0_pt_lm;
-      Histo1DPtr _h0_pt_sm;
-      Histo1DPtr _h0_pt_leadjet;
-      Histo1DPtr _h0_pt_closest;
-      Histo1DPtr _h0_dR_leadjet_lm;
-      Histo1DPtr _h0_dR_leadjet_sm;
-      Histo1DPtr _h0_dR_closest_lm;
-      Histo1DPtr _h0_dR_closest_sm;
-      Histo1DPtr _h0_f_dR_leadjet_lm;
-      Histo1DPtr _h0_f_dR_leadjet_sm;
-      Histo1DPtr _h0_f_dR_closest_lm;
-      Histo1DPtr _h0_f_dR_closest_sm;
+__HISTOPTR__
       //@}
 
 
