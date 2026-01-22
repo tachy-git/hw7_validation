@@ -26,9 +26,11 @@ namespace Rivet {
       void init() {
         // Projections
         declare(FinalState(), "FS");
-        declare(FastJets(FinalState(), FastJets::ANTIKT, 0.4), "Jets");
+        declare(FastJets(FinalState(), FastJets::ANTIKT, 0.3), "Jets");
 
 __BOOKHISTO__
+
+book(_h0_dr_leadjet_lm_sm,"h0_dr_leadjet_lm_sm",50,0,0.5,50,0,0.5);
 
       }
       Particles findZprimes(const Particles& allptc){
@@ -348,6 +350,7 @@ __BOOKHISTO__
         for(const auto& jet: ptjets){
           if( jet.pt() < 30. ) continue;
           if( jet.abseta() > 2.4 ) continue;
+          //if( !passJetID(jet) ) continue;
           leadjet = jet;
           foundLeadJet = true;
           break;
@@ -362,20 +365,31 @@ __BOOKHISTO__
           _h0_f_dR_leadjet_sm->fill(deltaR(leadjet.momentum(), sm.momentum()));
           _h0_f_dR_mumu->fill(deltaR(lm.momentum(), sm.momentum()));
           _h0_f_dR_leadjet_realmu->fill(dr);
+
+          _h0_dR_qzp->fill(deltaR(partner.momentum(),zp.momentum()));
+          _h0_f_dR_qzp->fill(deltaR(partner.momentum(),zp.momentum()));
+          _h0_dR_qlm->fill(deltaR(partner.momentum(),lm.momentum()));
+          _h0_f_dR_qlm->fill(deltaR(partner.momentum(),lm.momentum()));
           _h0_pt_zp->fill(zp.pt());
           _h0_eta_zp->fill(zp.eta());
           _h0_pt_q->fill(partner.pt());
           _h0_eta_q->fill(partner.eta());
+
+          _h0_dr_leadjet_lm_sm->fill(deltaR(leadjet.momentum(),lm.momentum()), deltaR(leadjet.momentum(),sm.momentum()));
 
           _h0_dphi_leadjet_lm->fill(deltaPhi(leadjet.momentum(),lm.momentum()));
           _h0_deta_leadjet_lm->fill(deltaEta(leadjet.momentum(),lm.momentum()));
           if( deltaR(leadjet.momentum(), lm.momentum()) < 0.2 ){
             _h0_pt_leadjet_less->fill(leadjet.pt());
             _h0_dR_qzp_less->fill(deltaR(partner.momentum(),zp.momentum()));
+            _h0_f_dR_qzp_less->fill(deltaR(partner.momentum(),zp.momentum()));
+            _h0_dR_qlm_less->fill(deltaR(partner.momentum(),lm.momentum()));
+            _h0_f_dR_qlm_less->fill(deltaR(partner.momentum(),lm.momentum()));
             _h0_pt_q_less->fill(partner.pt());
             _h0_pt_zp_less->fill(zp.pt());
             _h0_eta_q_less->fill(partner.eta());
             _h0_eta_zp_less->fill(zp.eta());
+            _h0_f_dR_leadjet_sm_less->fill(deltaR(leadjet.momentum(), sm.momentum()));
             cout << "[less]zp " << std::scientific << std::setprecision(16) << zp.px() << endl;
             cout << "[less]pq " << std::scientific << std::setprecision(16) << partner.px() << endl;
             cout << "[less]lm " << std::scientific << std::setprecision(16) << lm.px() << " " << lm.hasAncestorWith(Cuts::abspid==zp_pid,false) << endl;
@@ -383,10 +397,14 @@ __BOOKHISTO__
           else if( deltaR(leadjet.momentum(), lm.momentum()) < 0.3){
             _h0_pt_leadjet_more->fill(leadjet.pt());
             _h0_dR_qzp_more->fill(deltaR(partner.momentum(),zp.momentum()));
+            _h0_f_dR_qzp_more->fill(deltaR(partner.momentum(),zp.momentum()));
+            _h0_dR_qlm_more->fill(deltaR(partner.momentum(),lm.momentum()));
+            _h0_f_dR_qlm_more->fill(deltaR(partner.momentum(),lm.momentum()));
             _h0_pt_q_more->fill(partner.pt());
             _h0_pt_zp_more->fill(zp.pt());
             _h0_eta_q_more->fill(partner.eta());
             _h0_eta_zp_more->fill(zp.eta());
+            _h0_f_dR_leadjet_sm_more->fill(deltaR(leadjet.momentum(), sm.momentum()));
             cout << "[more] " << std::scientific << std::setprecision(16) << zp.px() << endl;
             cout << "[more]pq " << std::scientific << std::setprecision(16) << partner.px() << endl;
             cout << "[more]lm " << std::scientific << std::setprecision(16) << lm.px() << " " << lm.hasAncestorWith(Cuts::abspid==zp_pid,false) << endl;
@@ -503,6 +521,7 @@ __BOOKHISTO__
         double weight = crossSection()/sumOfWeights()/femtobarn * norm;
 
 __SCALEHISTO__
+scale(_h0_dr_leadjet_lm_sm,weight);
 
         // data file
         std::ofstream file;
@@ -523,6 +542,7 @@ __SCALEHISTO__
       /// @name Histograms
       //@{
 __HISTOPTR__
+Histo2DPtr _h0_dr_leadjet_lm_sm;
       //@}
 
 
