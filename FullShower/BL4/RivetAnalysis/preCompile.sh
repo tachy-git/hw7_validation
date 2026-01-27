@@ -83,4 +83,11 @@ run_rivet() {
 ##################
 ### Rivet run  ###
 ##################
+echo ++++++++++++++++++++++
+echo Run the command below
+echo ++++++++++++++++++++++
 run_rivet FO 52 5
+run_rivet RS 52 5
+run_rivet FO 5 5
+run_rivet RS 5 5
+echo ++++++++++++++++++++++

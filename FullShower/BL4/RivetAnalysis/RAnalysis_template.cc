@@ -26,11 +26,10 @@ namespace Rivet {
       void init() {
         // Projections
         declare(FinalState(), "FS");
-        declare(FastJets(FinalState(), FastJets::ANTIKT, 0.3), "Jets");
+        declare(FastJets(FinalState(), FastJets::ANTIKT, 0.4), "Jets");
 
 __BOOKHISTO__
 
-book(_h0_dr_leadjet_lm_sm,"h0_dr_leadjet_lm_sm",50,0,0.5,50,0,0.5);
 
       }
       Particles findZprimes(const Particles& allptc){
@@ -203,6 +202,21 @@ book(_h0_dr_leadjet_lm_sm,"h0_dr_leadjet_lm_sm",50,0,0.5,50,0,0.5);
         return legs;
       }
       Particle findPartnerQuark(const Particle & zp, const Particles& legs){
+        // dR matching
+        /*
+        double dR[2];
+        for(unsigned i=0; i<2; i++){
+          dR[i] = deltaR(legs[i].momentum(),zp.momentum());
+        }
+        if( dR[0] < dR[1] ){
+          return legs[0];
+        }
+        else{
+          return legs[1];
+        }
+        */
+
+        // pT2 matching
         Particle partner;
         double pT2[2], z[2];
         for(unsigned i=0; i<legs.size(); i++) {
@@ -267,8 +281,6 @@ book(_h0_dr_leadjet_lm_sm,"h0_dr_leadjet_lm_sm",50,0,0.5,50,0,0.5);
         const Jets& ptjets = alljets.jetsByPt(20*GeV);
         const Particles& allptc = event.allParticles();
 
-        _n_evt->fill(0);
-
         // =======================================
         // Zprime selection (only for Signal)
         // =======================================
@@ -327,110 +339,44 @@ book(_h0_dr_leadjet_lm_sm,"h0_dr_leadjet_lm_sm",50,0,0.5,50,0,0.5);
           }
           if(foundDimuon) break;
         }
-        if(!foundDimuon) vetoEvent;
-        _h0_pt_lm->fill(lm.pt());
-        _h0_pt_sm->fill(sm.pt());
-        _h0_eta_lm->fill(lm.eta());
-        _h0_eta_sm->fill(sm.eta());
-
-        double dr = -999;
-        Particle realmu;
-        for(const auto& m: muons){
-          if( m.pt() < 5. || m.abseta() > 2.4 ) continue;
-          if( m.hasAncestorWith(Cuts::abspid==zp_pid,false) ){
-            realmu = m;
-            break;
-          }
-        }
-        _h0_pt_realmu->fill(realmu.pt());
-        _h0_eta_realmu->fill(realmu.eta());
+        if( !foundDimuon ) vetoEvent;
 
         Jet leadjet;
         bool foundLeadJet = false;
         for(const auto& jet: ptjets){
           if( jet.pt() < 30. ) continue;
           if( jet.abseta() > 2.4 ) continue;
-          //if( !passJetID(jet) ) continue;
           leadjet = jet;
           foundLeadJet = true;
           break;
         }
-        if(foundLeadJet){
-          dr = deltaR(leadjet.momentum(),realmu.momentum());
-          _h0_pt_leadjet->fill(leadjet.pt());
-          _h0_eta_leadjet->fill(leadjet.eta());
-          _h0_dR_leadjet_lm->fill(deltaR(leadjet.momentum(), lm.momentum()));
-          _h0_f_dR_leadjet_lm->fill(deltaR(leadjet.momentum(), lm.momentum()));
-          _h0_dR_leadjet_sm->fill(deltaR(leadjet.momentum(), sm.momentum()));
-          _h0_f_dR_leadjet_sm->fill(deltaR(leadjet.momentum(), sm.momentum()));
-          _h0_f_dR_mumu->fill(deltaR(lm.momentum(), sm.momentum()));
-          _h0_f_dR_leadjet_realmu->fill(dr);
+        if( !foundLeadJet ) vetoEvent;
 
-          _h0_dR_qzp->fill(deltaR(partner.momentum(),zp.momentum()));
-          _h0_f_dR_qzp->fill(deltaR(partner.momentum(),zp.momentum()));
-          _h0_dR_qlm->fill(deltaR(partner.momentum(),lm.momentum()));
-          _h0_f_dR_qlm->fill(deltaR(partner.momentum(),lm.momentum()));
-          _h0_pt_zp->fill(zp.pt());
-          _h0_eta_zp->fill(zp.eta());
-          _h0_pt_q->fill(partner.pt());
-          _h0_eta_q->fill(partner.eta());
+        _h0_pt_zp->fill(zp.pt());
+        _h0_pt_j->fill(leadjet.pt());
+        _h0_pt_q->fill(partner.pt());
+        _h0_pt_lm->fill(lm.pt());
+        _h0_pt_sm->fill(sm.pt());
+        
+        _h0_eta_zp->fill(zp.eta());
+        _h0_eta_j->fill(leadjet.eta());
+        _h0_eta_q->fill(partner.eta());
+        _h0_eta_lm->fill(lm.eta());
+        _h0_eta_sm->fill(sm.eta());
 
-          _h0_dr_leadjet_lm_sm->fill(deltaR(leadjet.momentum(),lm.momentum()), deltaR(leadjet.momentum(),sm.momentum()));
+        _h0_dR_qzp->fill(deltaR(partner.momentum(),zp.momentum()));
+        _h0_dR_qlm->fill(deltaR(partner.momentum(),lm.momentum()));
+        _h0_dR_qsm->fill(deltaR(partner.momentum(),sm.momentum()));
+        _h0_dR_jzp->fill(deltaR(leadjet.momentum(),zp.momentum()));
+        _h0_dR_jlm->fill(deltaR(leadjet.momentum(),lm.momentum()));
+        _h0_dR_jsm->fill(deltaR(leadjet.momentum(),sm.momentum()));
 
-          _h0_dphi_leadjet_lm->fill(deltaPhi(leadjet.momentum(),lm.momentum()));
-          _h0_deta_leadjet_lm->fill(deltaEta(leadjet.momentum(),lm.momentum()));
-          if( deltaR(leadjet.momentum(), lm.momentum()) < 0.2 ){
-            _h0_pt_leadjet_less->fill(leadjet.pt());
-            _h0_dR_qzp_less->fill(deltaR(partner.momentum(),zp.momentum()));
-            _h0_f_dR_qzp_less->fill(deltaR(partner.momentum(),zp.momentum()));
-            _h0_dR_qlm_less->fill(deltaR(partner.momentum(),lm.momentum()));
-            _h0_f_dR_qlm_less->fill(deltaR(partner.momentum(),lm.momentum()));
-            _h0_pt_q_less->fill(partner.pt());
-            _h0_pt_zp_less->fill(zp.pt());
-            _h0_eta_q_less->fill(partner.eta());
-            _h0_eta_zp_less->fill(zp.eta());
-            _h0_f_dR_leadjet_sm_less->fill(deltaR(leadjet.momentum(), sm.momentum()));
-            cout << "[less]zp " << std::scientific << std::setprecision(16) << zp.px() << endl;
-            cout << "[less]pq " << std::scientific << std::setprecision(16) << partner.px() << endl;
-            cout << "[less]lm " << std::scientific << std::setprecision(16) << lm.px() << " " << lm.hasAncestorWith(Cuts::abspid==zp_pid,false) << endl;
-          }
-          else if( deltaR(leadjet.momentum(), lm.momentum()) < 0.3){
-            _h0_pt_leadjet_more->fill(leadjet.pt());
-            _h0_dR_qzp_more->fill(deltaR(partner.momentum(),zp.momentum()));
-            _h0_f_dR_qzp_more->fill(deltaR(partner.momentum(),zp.momentum()));
-            _h0_dR_qlm_more->fill(deltaR(partner.momentum(),lm.momentum()));
-            _h0_f_dR_qlm_more->fill(deltaR(partner.momentum(),lm.momentum()));
-            _h0_pt_q_more->fill(partner.pt());
-            _h0_pt_zp_more->fill(zp.pt());
-            _h0_eta_q_more->fill(partner.eta());
-            _h0_eta_zp_more->fill(zp.eta());
-            _h0_f_dR_leadjet_sm_more->fill(deltaR(leadjet.momentum(), sm.momentum()));
-            cout << "[more] " << std::scientific << std::setprecision(16) << zp.px() << endl;
-            cout << "[more]pq " << std::scientific << std::setprecision(16) << partner.px() << endl;
-            cout << "[more]lm " << std::scientific << std::setprecision(16) << lm.px() << " " << lm.hasAncestorWith(Cuts::abspid==zp_pid,false) << endl;
-          }
-        }
-        double minDR = 999.;
-        Jet closest;
-        bool foundClosestJet = false;
-        for(const auto& jet: ptjets){
-          if( jet.pt() < 30. ) continue;
-          if( jet.abseta() > 2.4 ) continue;
-          double dR = deltaR(jet.momentum(), lm.momentum());
-          if(dR < minDR){
-            minDR = dR;
-            closest = jet;
-            foundClosestJet = true;
-          }
-        }
-        if(foundClosestJet){
-          _h0_pt_closest->fill(closest.pt());
-          _h0_eta_closest->fill(closest.eta());
-          _h0_dR_closest_lm->fill(minDR);
-          _h0_f_dR_closest_lm->fill(minDR);
-          _h0_dR_closest_sm->fill(deltaR(closest.momentum(), sm.momentum()));
-          _h0_f_dR_closest_sm->fill(deltaR(closest.momentum(), sm.momentum()));
-        }
+        _h0_dRfine_qzp->fill(deltaR(partner.momentum(),zp.momentum()));
+        _h0_dRfine_qlm->fill(deltaR(partner.momentum(),lm.momentum()));
+        _h0_dRfine_qsm->fill(deltaR(partner.momentum(),sm.momentum()));
+        _h0_dRfine_jzp->fill(deltaR(leadjet.momentum(),zp.momentum()));
+        _h0_dRfine_jlm->fill(deltaR(leadjet.momentum(),lm.momentum()));
+        _h0_dRfine_jsm->fill(deltaR(leadjet.momentum(),sm.momentum()));
 
         // =======================================
         // Event selection
@@ -485,10 +431,10 @@ book(_h0_dr_leadjet_lm_sm,"h0_dr_leadjet_lm_sm",50,0,0.5,50,0,0.5);
               _h_dR_jdimu -> fill( deltaR(jet.momentum(), dimuon) );
               _h_dR_jlmu  -> fill( deltaR(jet.momentum(), lmu.momentum()) );
               _h_dR_jsmu  -> fill( deltaR(jet.momentum(), smu.momentum()) );
-              _h_f_dR_mumu  -> fill( deltaR(lmu.momentum(), smu.momentum()) );
-              _h_f_dR_jdimu -> fill( deltaR(jet.momentum(), dimuon) );
-              _h_f_dR_jlmu  -> fill( deltaR(jet.momentum(), lmu.momentum()) );
-              _h_f_dR_jsmu  -> fill( deltaR(jet.momentum(), smu.momentum()) );
+              _h_dRfine_mumu  -> fill( deltaR(lmu.momentum(), smu.momentum()) );
+              _h_dRfine_jdimu -> fill( deltaR(jet.momentum(), dimuon) );
+              _h_dRfine_jlmu  -> fill( deltaR(jet.momentum(), lmu.momentum()) );
+              _h_dRfine_jsmu  -> fill( deltaR(jet.momentum(), smu.momentum()) );
 
               if( sampleTag == "FO" || sampleTag == "RS" ){
                 _h_pt_zp  -> fill( zp.pt() );
@@ -500,11 +446,11 @@ book(_h0_dr_leadjet_lm_sm,"h0_dr_leadjet_lm_sm",50,0,0.5,50,0,0.5);
                 _h_dR_qlmu  -> fill( deltaR(partner.momentum(), lmu.momentum()) );
                 _h_dR_qsmu  -> fill( deltaR(partner.momentum(), smu.momentum()) );
                 _h_dR_jzp   -> fill( deltaR(jet.momentum(), zp.momentum()) );
-                _h_f_dR_qzp   -> fill( deltaR(partner.momentum(), zp.momentum()) );
-                _h_f_dR_qdimu -> fill( deltaR(partner.momentum(), dimuon) );
-                _h_f_dR_qlmu  -> fill( deltaR(partner.momentum(), lmu.momentum()) );
-                _h_f_dR_qsmu  -> fill( deltaR(partner.momentum(), smu.momentum()) );
-                _h_f_dR_jzp   -> fill( deltaR(jet.momentum(), zp.momentum()) );
+                _h_dRfine_qzp   -> fill( deltaR(partner.momentum(), zp.momentum()) );
+                _h_dRfine_qdimu -> fill( deltaR(partner.momentum(), dimuon) );
+                _h_dRfine_qlmu  -> fill( deltaR(partner.momentum(), lmu.momentum()) );
+                _h_dRfine_qsmu  -> fill( deltaR(partner.momentum(), smu.momentum()) );
+                _h_dRfine_jzp   -> fill( deltaR(jet.momentum(), zp.momentum()) );
               }
               // For now, only count the leading case
               vetoEvent;
@@ -521,7 +467,6 @@ book(_h0_dr_leadjet_lm_sm,"h0_dr_leadjet_lm_sm",50,0,0.5,50,0,0.5);
         double weight = crossSection()/sumOfWeights()/femtobarn * norm;
 
 __SCALEHISTO__
-scale(_h0_dr_leadjet_lm_sm,weight);
 
         // data file
         std::ofstream file;
@@ -542,7 +487,6 @@ scale(_h0_dr_leadjet_lm_sm,weight);
       /// @name Histograms
       //@{
 __HISTOPTR__
-Histo2DPtr _h0_dr_leadjet_lm_sm;
       //@}
 
 

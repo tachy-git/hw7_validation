@@ -1,5 +1,4 @@
 # event counters
-n_evt 10 0 10
 n_zp 5 0 5
 
 # pT histograms
@@ -9,42 +8,24 @@ h_pt_j 500 0 1000
 h_pt_lmu 500 0 1000
 h_pt_smu 500 0 1000
 
+h0_pt_zp 500 0 1000
+h0_pt_j 500 0 1000
+h0_pt_q 500 0 1000
 h0_pt_lm 500 0 1000
 h0_pt_sm 500 0 1000
-h0_pt_leadjet 500 0 1000
-h0_pt_closest 500 0 1000
-h0_pt_leadjet_less 500 0 1000
-h0_pt_leadjet_more 500 0 1000
-h0_pt_realmu 500 0 1000
-h0_pt_zp 500 0 1000
-h0_pt_zp_less 500 0 1000
-h0_pt_zp_more 500 0 1000
-h0_pt_q 500 0 1000
-h0_pt_q_less 500 0 1000
-h0_pt_q_more 500 0 1000
 
 # eta histograms
-h0_eta_leadjet 24 -2.4 2.4
-h0_eta_closest 24 -2.4 2.4
-h0_eta_lm 24 -2.4 2.4
-h0_eta_sm 24 -2.4 2.4
-h0_eta_realmu 24 -2.4 2.4
-h0_eta_zp 24 -2.4 2.4
-h0_eta_zp_less 24 -2.4 2.4
-h0_eta_zp_more 24 -2.4 2.4
-h0_eta_q 24 -2.4 2.4
-h0_eta_q_less 24 -2.4 2.4
-h0_eta_q_more 24 -2.4 2.4
-
 h_eta_zp 50 -5 5
 h_eta_q 50 -5 5
 h_eta_j 24 -2.4 2.4
 h_eta_lmu 24 -2.4 2.4
 h_eta_smu 24 -2.4 2.4
 
-# delta-phi / delta-eta
-h0_dphi_leadjet_lm 50 0 0.5
-h0_deta_leadjet_lm 50 0 0.5
+h0_eta_zp 50 -5 5
+h0_eta_q 50 -5 5
+h0_eta_j 24 -2.4 2.4
+h0_eta_lm 24 -2.4 2.4
+h0_eta_sm 24 -2.4 2.4
 
 # delta-R (coarse)
 h_dR_mumu 40 0 4
@@ -57,31 +38,30 @@ h_dR_jdimu 40 0 4
 h_dR_jlmu 40 0 4
 h_dR_jsmu 40 0 4
 
-h0_dR_leadjet_lm 40 0 4
-h0_dR_leadjet_sm 40 0 4
-h0_dR_closest_lm 40 0 4
-h0_dR_closest_sm 40 0 4
+h0_dR_qzp 40 0 4
+h0_dR_qlm 40 0 4
+h0_dR_qsm 40 0 4
+h0_dR_jzp 40 0 4
+h0_dR_jlm 40 0 4
+h0_dR_jsm 40 0 4
 
 # delta-R (fine)
-h_f_dR_mumu 50 0 0.5
-h_f_dR_qzp 50 0 0.5
-h_f_dR_qdimu 50 0 0.5
-h_f_dR_qlmu 50 0 0.5
-h_f_dR_qsmu 50 0 0.5
-h_f_dR_jzp 50 0 0.5
-h_f_dR_jdimu 50 0 0.5
-h_f_dR_jlmu 50 0 0.5
-h_f_dR_jsmu 50 0 0.5
+h_dRfine_mumu 50 0 0.5
+h_dRfine_qzp 50 0 0.5
+h_dRfine_qdimu 50 0 0.5
+h_dRfine_qlmu 50 0 0.5
+h_dRfine_qsmu 50 0 0.5
+h_dRfine_jzp 50 0 0.5
+h_dRfine_jdimu 50 0 0.5
+h_dRfine_jlmu 50 0 0.5
+h_dRfine_jsmu 50 0 0.5
 
-h0_f_dR_leadjet_lm 50 0 0.5
-h0_f_dR_leadjet_sm 50 0 0.5
-h0_f_dR_closest_lm 50 0 0.5
-h0_f_dR_closest_sm 50 0 0.5
-h0_f_dR_mumu 50 0 0.5
-
-h0_f_dR_leadjet_realmu 50 0 0.5
-h0_dR_qzp_less 50 0 0.5
-h0_dR_qzp_more 50 0 0.5
+h0_dRfine_qzp 50 0 0.5
+h0_dRfine_qlm 50 0 0.5
+h0_dRfine_qsm 50 0 0.5
+h0_dRfine_jzp 50 0 0.5
+h0_dRfine_jlm 50 0 0.5
+h0_dRfine_jsm 50 0 0.5
 
 # invariant mass
 h_invm_1 80 0 80
