@@ -1,0 +1,107 @@
+# event counters
+n_evt 10 0 10
+n_zp 5 0 5
+
+# ### parton validation
+hval_pt_zp 100 0 1000
+hval_pt_q 100 0 1000
+hval_z 50 0 1
+hval_c_z 50 0 1
+hval_eta_zp 30 -3. 3.
+hval_eta_q 30 -3. 3.
+hval_dR_qzp 40 0 4
+hval_dRfine_qzp 30 0 0.6
+# 
+hval_pt_qmatch 100 0 100
+hval_pt_qother 100 0 100
+hval_eta_qmatch 80 -4 4
+hval_eta_qother 80 -4 4
+# 
+# ### jet validation (using quark-jet matching)
+# # pT histograms
+h0_pt_zp 200 0 1000
+h0_pt_j 200 0 1000
+h0_pt_q 200 0 1000
+h0_pt_lm 200 0 1000
+h0_pt_sm 200 0 1000
+# 
+# # eta histograms
+h0_eta_zp 50 -5 5
+h0_eta_q 50 -5 5
+h0_eta_j 24 -2.4 2.4
+# h0_eta_lm 24 -2.4 2.4
+# h0_eta_sm 24 -2.4 2.4
+# 
+h0_z_zp 50 0 2
+h0_z_dimu 50 0 2
+h0_c_z_zp 50 0 2
+h0_c_z_dimu 50 0 2
+# 
+# # delta-R (coarse)
+h0_dR_qzp 40 0 4
+h0_dR_qdimu 40 0 4
+h0_dR_qlm 40 0 4
+h0_dR_qsm 40 0 4
+h0_dR_jzp 40 0 4
+h0_dR_jdimu 40 0 4
+h0_dR_jlm 40 0 4
+h0_dR_jsm 40 0 4
+h0_dR_jq 20 0 1
+# 
+# # delta-R (fine)
+h0_dRfine_qzp 50 0 0.5
+h0_dRfine_qdimu 50 0 0.5
+h0_dRfine_qlm 50 0 0.5
+h0_dRfine_qsm 50 0 0.5
+h0_dRfine_jzp 50 0 0.5
+h0_dRfine_jdimu 50 0 0.5
+h0_dRfine_jlm 50 0 0.5
+h0_dRfine_jsm 50 0 0.5
+# 
+h0_j_MuF 100 0 1
+h0_c_j_MuF 100 0 1
+# 
+# ### jet validation (after event selection)
+h_pt_zp 200 0 1000
+h_pt_q 200 0 1000
+h_pt_j 200 0 1000
+h_pt_lmu 200 0 1000
+h_pt_smu 200 0 1000
+# 
+h_eta_zp 50 -5 5
+h_eta_q 50 -5 5
+h_eta_j 24 -2.4 2.4
+# h_eta_lmu 24 -2.4 2.4
+# h_eta_smu 24 -2.4 2.4
+# 
+h_z_zp 50 0 2
+h_z_dimu 50 0 2
+h_c_z_zp 50 0 2
+h_c_z_dimu 50 0 2
+# 
+h_dR_qzp 40 0 4
+h_dR_qdimu 40 0 4
+h_dR_qlmu 40 0 4
+h_dR_qsmu 40 0 4
+# 
+h_dRfine_mumu 60 0 0.6
+h_dRfine_qzp 50 0 0.5
+h_dRfine_qdimu 50 0 0.5
+h_dRfine_qlmu 50 0 0.5
+h_dRfine_qsmu 50 0 0.5
+h_dRfine_jzp 50 0 0.5
+h_dRfine_jdimu 50 0 0.5
+h_dRfine_jlmu 40 0 0.4
+h_dRfine_jsmu 40 0 0.4
+# 
+# # invariant mass
+h_invm 800 0 80
+# 
+h_j_multiplicity 30 0 30
+h_j_NHF 40 0 0.2
+h_j_CHF 40 0 0.2
+h_j_CM 20 0 20
+h_j_MuF 40 0.8 1
+
+### MG ptj test
+h_branchpt 100 0 500
