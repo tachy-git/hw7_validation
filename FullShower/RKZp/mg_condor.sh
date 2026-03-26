@@ -74,9 +74,8 @@ python -m pip install --user six
 ###############
 ### MG run  ###
 ###############
-MG_File="MG_setup.dat"
-: > "$MG_File"  # truncate
-
+MG_File1="MG_output.dat"
+: > "$MG_File1"
 {
   echo "set auto_update 0"
   echo "import model RKZp_UFO"
@@ -87,9 +86,24 @@ MG_File="MG_setup.dat"
     echo "generate p p > zp b b~, zp > mu+ mu- --diagram_filter"
     #echo "generate p p > zp b b~, zp > mu+ mu-"
   fi
-
   echo "output madevent mg"
-  echo "launch"
+} >> "$MG_File1"
+
+"$MG" "$MG_File1"
+
+# ============================
+# make a symbolic link for pdf 303600
+# for the error, IsADirectoryError: [Errno 21] Is a directory: '/cms/ldap_home/taehee/HerwigWD/opt/MG5_aMC_v3_5_1/HEPTools/lhapdf6_py3/share/LHAPDF/NNPDF31_nnlo_as_0118'
+PDFSRC="/cms/ldap_home/taehee/HerwigWD/opt/$MG_version/HEPTools/lhapdf6_py3/share/LHAPDF/NNPDF31_nnlo_as_0118"
+PDFDST="$outputdir/mg/lib/PDFsets/NNPDF31_nnlo_as_0118"
+mkdir -p "$outputdir/mg/lib/PDFsets"
+rm -rf "$PDFDST"
+ln -s "$PDFSRC" "$PDFDST"
+# ============================
+MG_File2="MG_launch.dat"
+: > "$MG_File2"
+{
+  echo "launch mg"
   echo "set nevents $nevents"
   echo "set ebeam $ebeam"
   echo "set etab 4."
@@ -112,21 +126,9 @@ MG_File="MG_setup.dat"
   echo "set use_syst False"
   echo "set pdlabel lhapdf"
   echo "set lhaid 303600"
-} >> "$MG_File"
+} >> "$MG_File2"
 
-# ============================
-# make a symbolic link for pdf 303600
-# for the error, IsADirectoryError: [Errno 21] Is a directory: '/cms/ldap_home/taehee/HerwigWD/opt/MG5_aMC_v3_5_1/HEPTools/lhapdf6_py3/share/LHAPDF/NNPDF31_nnlo_as_0118'
-PDFSRC="/cms/ldap_home/taehee/HerwigWD/opt/$MG_version/HEPTools/lhapdf6_py3/share/LHAPDF/NNPDF31_nnlo_as_0118"
-PDFDST="$outputdir/mg/lib/PDFsets/NNPDF31_nnlo_as_0118"
-mkdir -p "$outputdir/mg/lib/PDFsets"
-rm -rf "$PDFDST"
-ln -s "$PDFSRC" "$PDFDST"
-# ============================
-
-"$MG" "$MG_File"
+"$MG" "$MG_File2"
 
 cp "mg/Events/run_01/unweighted_events.lhe.gz" "$outputdir/"
-cp "$MG_File" "$outputdir/"
-
 rm -rf mg py.py
