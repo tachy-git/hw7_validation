@@ -1,0 +1,182 @@
+# -*- ThePEG-repository -*-
+
+### CMS commands ###
+
+##################################################
+# Example generator based on LHC parameters
+# usage: Herwig read LHC.in
+##################################################
+read snippets/PPCollider.in
+
+### BSM commands ###
+
+##################################################
+# Technical parameters for this run
+##################################################
+cd /Herwig/Generators
+
+##################################################
+# LHC physics parameters (override defaults here) 
+##################################################
+
+read FRModel.model
+
+cd /Herwig/NewPhysics
+
+#set TwoBodyDC:CreateDecayModes No
+#set ThreeBodyDC:CreateDecayModes No
+#set FourBodyDC:CreateDecayModes No
+#set WeakDecayConstructor:CreateDecayModes No
+
+# Force turn-off decay modes except Zp->mu-,mu+
+# This makes all Z' decay into dimuon, i.e. force Br(Z'->mu-,mu+) = 1, while log file says it's branching fraction is not 1. One should mention this or recalculate the final cross section
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->u,ubar;
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->d,dbar;
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->s,sbar;
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->c,cbar;
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->b,bbar;
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->e-,e+;
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->tau-,tau+;
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->nu_e,nu_ebar;
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->nu_mu,nu_mubar;
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->nu_tau,nu_taubar;
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->bbar,s;
+insert /Herwig/NewPhysics/DecayConstructor:DisableModes 0 Zp->b,sbar;
+
+# Particle property
+cd /Herwig/FRModel/Particles
+#set /Herwig/FRModel/Particles/Zp:Stable Stable
+
+### Private commands ###
+##################################################
+## CH3 Tune
+##################################################
+#https://github.com/cms-sw/cmssw/blob/515a95035270919063dc9a36356b03b4ee097ec2/Configuration/Generator/python/Herwig7Settings/Herwig7CH3TuneSettings_cfi.py
+# CH3 AlphaS
+cd /Herwig/Shower
+set AlphaQCDISR:AlphaIn 0.118
+set AlphaQCDFSR:AlphaIn 0.118
+cd /
+# CH3 MPI settings
+set /Herwig/Hadronization/ColourReconnector:ReconnectionProbability 0.4712
+set /Herwig/UnderlyingEvent/MPIHandler:pTmin0 3.04
+set /Herwig/UnderlyingEvent/MPIHandler:InvRadius 1.284
+set /Herwig/UnderlyingEvent/MPIHandler:Power 0.1362
+# CH3 PDF
+cd /Herwig/Partons
+create ThePEG::LHAPDF PDFSet_nnlo ThePEGLHAPDF.so
+set PDFSet_nnlo:PDFName NNPDF31_nnlo_as_0118.LHgrid
+set PDFSet_nnlo:RemnantHandler HadronRemnants
+set /Herwig/Particles/p+:PDF PDFSet_nnlo
+set /Herwig/Particles/pbar-:PDF PDFSet_nnlo
+set /Herwig/Partons/PPExtractor:FirstPDF  PDFSet_nnlo
+set /Herwig/Partons/PPExtractor:SecondPDF PDFSet_nnlo
+set /Herwig/Shower/ShowerHandler:PDFA PDFSet_nnlo
+set /Herwig/Shower/ShowerHandler:PDFB PDFSet_nnlo
+create ThePEG::LHAPDF PDFSet_lo ThePEGLHAPDF.so
+set PDFSet_lo:PDFName NNPDF31_lo_as_0130.LHgrid
+set PDFSet_lo:RemnantHandler HadronRemnants
+set /Herwig/Shower/ShowerHandler:PDFARemnant PDFSet_lo
+set /Herwig/Shower/ShowerHandler:PDFBRemnant PDFSet_lo
+set /Herwig/Partons/MPIExtractor:FirstPDF PDFSet_lo
+set /Herwig/Partons/MPIExtractor:SecondPDF PDFSet_lo
+cd /
+
+##################################################
+## Process selection
+##################################################
+
+library LesHouches.so
+
+cd /Herwig/EventHandlers
+create ThePEG::LesHouchesFileReader myReader
+set myReader:FileName __DIR__/unweighted_events.lhe.gz
+create ThePEG::Cuts /Herwig/Cuts/NoCuts
+set myReader:Cuts /Herwig/Cuts/NoCuts
+set myReader:CacheFileName cache.tmp
+set myReader:MaxScan __NEVENTS__
+
+create ThePEG::LesHouchesEventHandler myLesHouchesHandler
+set myLesHouchesHandler:CascadeHandler       /Herwig/Shower/ShowerHandler
+set myLesHouchesHandler:HadronizationHandler /Herwig/Hadronization/ClusterHadHandler
+set myLesHouchesHandler:DecayHandler         /Herwig/Decays/DecayHandler
+
+insert myLesHouchesHandler:LesHouchesReaders 0 myReader
+set myLesHouchesHandler:PartonExtractor /Herwig/Partons/PPExtractor
+set myLesHouchesHandler:WeightOption NegUnitWeight
+# set myLesHouchesHandler:WeightOption VarNegWeight
+set myReader:WeightWarnings false
+
+##################################################
+# PDFs
+##################################################
+
+set myReader:InitPDFs 0
+set myReader:MomentumTreatment RescaleEnergy #momentum conservation
+
+cd /Herwig/Partons
+#create ThePEG::LHAPDF myPDFset ThePEGLHAPDF.so
+#set myPDFset:PDFName MMHT2014lo68cl
+#set myPDFset:RemnantHandler HadronRemnants
+#set /Herwig/Particles/p+:PDF myPDFset
+#set /Herwig/Partons/PPExtractor:FirstPDF myPDFset
+#set /Herwig/Partons/PPExtractor:SecondPDF myPDFset
+#set /Herwig/EventHandlers/myReader:PDFA myPDFset
+#set /Herwig/EventHandlers/myReader:PDFB myPDFset
+set /Herwig/EventHandlers/myReader:PDFA PDFSet_nnlo
+set /Herwig/EventHandlers/myReader:PDFB PDFSet_nnlo
+
+
+##################################################
+# Technical parameters for this run
+##################################################
+
+cd /Herwig/Generators
+set EventGenerator:NumberOfEvents __NEVENTS__
+set EventGenerator:RandomNumberGenerator:Seed __SEED__
+set EventGenerator:PrintEvent 1
+set EventGenerator:MaxErrors 10000
+
+set EventGenerator:EventHandler:LuminosityFunction:Energy __COM__.*GeV
+set EventGenerator:EventHandler /Herwig/EventHandlers/myLesHouchesHandler
+
+##################################################
+## Scale choice
+## See the documentation for more options
+##################################################
+
+cd /Herwig/MatrixElements/Matchbox
+set Factory:ScaleChoice Scales/SHatScale
+
+##################################################
+## Matching and shower selection
+##################################################
+
+read Matchbox/LO-DefaultShower.in
+# read Matchbox/MCatLO-DefaultShower.in
+# read Matchbox/MCatNLO-DefaultShower.in
+
+set /Herwig/Shower/ShowerHandler:Interactions ALL
+set /Herwig/Shower/ShowerHandler:IntrinsicPtGaussian 2.2*GeV # add this line referencing LHC-FRModel.in
+#set /Herwig/Shower/PartnerFinder:QEDPartner IIandFF # Only for e+e- collider
+
+##################################################
+## prepare for Rivet analysis or HepMC output
+## when running with parton shower
+##################################################
+# Rivet analysis
+cd /Herwig/Analysis
+insert Rivet:Analyses 0 RAnalysis
+insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 Rivet
+
+# HepMC output 
+#read snippets/HepMC.in
+set /Herwig/Analysis/HepMC:PrintEvent __NEVENTS__
+insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 HepMC
+
+##################################################
+# Save run for later usage with 'Herwig run'
+##################################################
+cd /Herwig/Generators
+do /Herwig/MatrixElements/Matchbox/Factory:ProductionMode
+saverun LHC EventGenerator
