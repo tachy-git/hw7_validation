@@ -9,15 +9,15 @@ zpmass="${4:?missing zpmass}"
 coupling="${5:?missing coupling}"
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
-export SCRAM_ARCH=slc7_amd64_gcc700
+export SCRAM_ARCH=el8_amd64_gcc12
 
 WD="/cms/ldap_home/taehee/HerwigWD/hw7_validation/FullShower/RKZp/SampleGeneration"
-basedir="/cms_scratch/taehee/HerwigSample/RKZp_13TeV/RS/samples_nEvt-100000"
-herwigdir="/cms_scratch/taehee/HerwigSample/RKZp_13TeV/RS/hw_nEvt-100000/MZp-${zpmass}/${sample}/${process}"
+basedir="/cms_scratch/taehee/HerwigSample/RKZp_13p6TeV/RS/samples_nEvt-100000"
+herwigdir="/cms_scratch/taehee/HerwigSample/RKZp_13p6TeV/RS/hw_nEvt-100000/MZp-${zpmass}/${sample}/${process}"
 outputdir="${campaign}/MZp-${zpmass}/gbb-${coupling}/${sample}"
 tmpdir="${WD}/tmp/${outputdir}"
 
-RUNS=("GEN" "SIM" "DIGIPremix" "HLT" "RECO" "MiniAODv2")
+RUNS=("GEN" "SIM" "DRPremix1" "DRPremix2" "MiniAODv3" "NanoAOD")
 
 die() {
     echo "ERROR: $*" >&2
@@ -26,17 +26,14 @@ die() {
 
 get_cmssw_list() {
     case "$1" in
-        RunIISummer20UL16|RunIISummer20UL16APV)
-            echo "CMSSW_10_6_19_patch3 CMSSW_10_6_17_patch1 CMSSW_10_6_17_patch1 CMSSW_8_0_36_UL_patch1 CMSSW_10_6_17_patch1 CMSSW_10_6_25"
+        Run3Summer22|Run3Summer22EE)
+            echo "CMSSW_12_4_11_patch3" "CMSSW_12_4_11_patch3" "CMSSW_12_4_11_patch3" "CMSSW_12_4_11_patch3" "CMSSW_12_4_11_patch3" "CMSSW_12_6_0"
             ;;
-        RunIISummer20UL17)
-            echo "CMSSW_10_6_19_patch3 CMSSW_10_6_17_patch1 CMSSW_10_6_17_patch1 CMSSW_9_4_14_UL_patch1 CMSSW_10_6_17_patch1 CMSSW_10_6_20"
-            ;;
-        RunIISummer20UL18)
-            echo "CMSSW_10_6_19_patch3 CMSSW_10_6_17_patch1 CMSSW_10_6_17_patch1 CMSSW_10_2_16_UL CMSSW_10_6_17_patch1 CMSSW_10_6_20"
+        Run3Summer23|Run3Summer23BPix)
+            echo "CMSSW_13_0_14" "CMSSW_13_0_14" "CMSSW_13_0_14" "CMSSW_13_0_14" "CMSSW_13_0_14" "CMSSW_13_0_14"
             ;;
         *)
-            die "Wrong Campaign: $1. Choose among RunIISummer20UL16 RunIISummer20UL16APV RunIISummer20UL17 RunIISummer20UL18"
+            die "Wrong Campaign: $1. Choose among Run3Summer22 Run3Summer22EE Run3Summer23 Run3Summer23BPix"
             ;;
     esac
 }
@@ -49,13 +46,16 @@ mkdir -p "${tmpdir}"
 is_log_success() {
     local logfile="$1"
     [[ -f "$logfile" ]] &&
-    grep -q "MessageLogger Summary" "$logfile" &&
+    (
+        grep -q "MessageLogger Summary" "$logfile" ||
+        grep -q "Closed" "$logfile"
+    ) &&
     ! grep -q "Begin Fatal Exception" "$logfile"
 }
 
 prepare_cfg() {
     local step="$1"
-    local cfg_template="${WD}/files_cfg/${campaign}${step}_cfg.py"
+    local cfg_template="${WD}/cfgFilesRun3/${campaign}${step}_cfg.py"
     local cfg_out="${tmpdir}/${step}_${process}.py"
     local output_base="${basedir}/${outputdir}/${step}_${process}"
 
@@ -92,7 +92,7 @@ run_cms() {
 
     cd "$WD" || die "Failed to cd to $WD"
 
-    if [[ "$step" == "DIGIPremix" ]]; then
+    if [[ "$step" == "DIGIPremix1" ]]; then
         local trial=0
         while true; do
             cmsRun "$cfg" &> "$logfile"
@@ -104,8 +104,8 @@ run_cms() {
 
             if grep -q "Disabled source" "$logfile"; then
                 ((trial++))
-                echo "Failed to fetch PU files... retry ${trial}/20"
-                (( trial < 5 )) || die "DIGIPremix failed after 20 retries"
+                echo "Failed to fetch PU files... retry ${trial}"
+                (( trial < 3 )) || die "DIGIPremix failed after several retries"
             else
                 die "cmsRun failed for ${step}. See ${logfile}"
             fi
@@ -129,8 +129,14 @@ for ((i=0; i<${#RUNS[@]}; i++)); do
         runStep=$i
 
         if (( i > 0 )); then
-            prev="${RUNS[$((i-1))]}"
-            rm -f "${basedir}/${outputdir}/${prev}_${process}.root"
+          for ((j=0; j<i; j++)); do
+            prev="${RUNS[$((j))]}"
+            prevFile="${basedir}/${outputdir}/${prev}_${process}.root"
+            #if [[ -f "$prevFile" ]]; then
+              #echo "Removing previous step file: $prevFile"
+              #rm -f "$prevFile"
+            #fi
+          done
         fi
     fi
 done
@@ -155,7 +161,9 @@ for ((i=runStep+1; i<${#RUNS[@]}; i++)); do
         echo "${outputFile}: success"
         if (( i > 0 )); then
             prev="${RUNS[$((i-1))]}"
-            rm -f "${basedir}/${outputdir}/${prev}_${process}.root"
+            if [[ "$prev" != "MiniAODv3" ]]; then
+              rm -f "${basedir}/${outputdir}/${prev}_${process}.root"
+            fi
         fi
     else
         rm -f "$outputFile"
