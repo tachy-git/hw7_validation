@@ -29,7 +29,7 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input source
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring('file:gen_my.root'),
+    fileNames = cms.untracked.vstring('file:__INPUT__.root'),
     secondaryFileNames = cms.untracked.vstring()
 )
 
@@ -82,7 +82,7 @@ process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
         filterName = cms.untracked.string('')
     ),
     eventAutoFlushCompressedSize = cms.untracked.int32(20971520),
-    fileName = cms.untracked.string('file:sim.root'),
+    fileName = cms.untracked.string('file:__OUTPUT__.root'),
     outputCommands = process.RAWSIMEventContent.outputCommands+['keep GenEventInfoProduct_*_*_*'],
     splitLevel = cms.untracked.int32(0)
 )

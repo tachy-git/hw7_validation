@@ -2,12 +2,12 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: step1 --mc --eventcontent MINIAODSIM --datatier MINIAODSIM --conditions 130X_mcRun3_2023_realistic_v14 --step PAT --geometry DB:Extended --era Run3_2023 --filein file:dr2.root --fileout file:miniaod.root --no_exec --python_filename Run3Summer23MiniAODv4_cfg.py
+# with command line options: step1 --mc --eventcontent MINIAODSIM --datatier MINIAODSIM --conditions 124X_mcRun3_2022_realistic_v12 --step PAT --geometry DB:Extended --era Run3 --filein file:dr2.root --fileout file:miniaod.root --no_exec --python_filename miniaod.py
 import FWCore.ParameterSet.Config as cms
 
-from Configuration.Eras.Era_Run3_2023_cff import Run3_2023
+from Configuration.Eras.Era_Run3_cff import Run3
 
-process = cms.Process('PAT',Run3_2023)
+process = cms.Process('PAT',Run3)
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
@@ -52,9 +52,7 @@ process.options = cms.untracked.PSet(
     ),
     fileMode = cms.untracked.string('FULLMERGE'),
     forceEventSetupCacheClearOnNewRun = cms.untracked.bool(False),
-    holdsReferencesToDeleteEarly = cms.untracked.VPSet(),
     makeTriggerResults = cms.obsolete.untracked.bool,
-    modulesToIgnoreForDeleteEarly = cms.untracked.vstring(),
     numberOfConcurrentLuminosityBlocks = cms.untracked.uint32(0),
     numberOfConcurrentRuns = cms.untracked.uint32(1),
     numberOfStreams = cms.untracked.uint32(0),
@@ -148,7 +146,7 @@ process.MINIAODSIMoutput = cms.OutputModule("PoolOutputModule",
 
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '130X_mcRun3_2023_realistic_v14', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '124X_mcRun3_2022_realistic_v12', '')
 
 # Path and EndPath definitions
 process.Flag_BadChargedCandidateFilter = cms.Path(process.BadChargedCandidateFilter)

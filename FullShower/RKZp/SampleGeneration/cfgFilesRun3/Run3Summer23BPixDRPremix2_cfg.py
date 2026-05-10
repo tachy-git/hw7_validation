@@ -31,7 +31,7 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input source
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring('file:dr1.root'),
+    fileNames = cms.untracked.vstring('file:__INPUT__.root'),
     secondaryFileNames = cms.untracked.vstring()
 )
 
@@ -84,7 +84,7 @@ process.AODSIMoutput = cms.OutputModule("PoolOutputModule",
         filterName = cms.untracked.string('')
     ),
     eventAutoFlushCompressedSize = cms.untracked.int32(31457280),
-    fileName = cms.untracked.string('file:dr2.root'),
+    fileName = cms.untracked.string('file:__OUTPUT__.root'),
     outputCommands = process.AODSIMEventContent.outputCommands+['keep GenEventInfoProduct_*_*_*'],
     overrideInputFileSplitLevels = cms.untracked.bool(True)
 )

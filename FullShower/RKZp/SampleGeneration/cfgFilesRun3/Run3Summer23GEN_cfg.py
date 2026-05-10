@@ -46,8 +46,8 @@ process.output = cms.OutputModule("PoolOutputModule",
 process.genParticles.src= cms.InputTag("source","generator")
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, '130X_mcRun3_2023_realistic_v14', '')
-'''
 # For debugging
+'''
 process.MessageLogger = cms.Service("MessageLogger",
     destinations = cms.untracked.vstring('cout'),
     cout = cms.untracked.PSet(

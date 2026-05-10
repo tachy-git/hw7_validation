@@ -29,15 +29,13 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input source
 process.source = cms.Source("MCFileSource",
-            #fileNames = cms.untracked.vstring('file:__INPUT__.hepmc'),
-            fileNames = cms.untracked.vstring('file:/cms_scratch/taehee/HerwigSample/RKZp_13p6TeV/RS/hw_nEvt-100000/MZp-12/Pt-100To120_ppbb_56222/0/LHC.hepmc'),
+            fileNames = cms.untracked.vstring('file:__INPUT__.hepmc'),
             firstLuminosityBlockForEachRun = cms.untracked.VLuminosityBlockID([]),
             )
 
 # Output definition
 process.output = cms.OutputModule("PoolOutputModule",
-                #fileName = cms.untracked.string('file:__OUTPUT__.root'),
-                fileName = cms.untracked.string('file:gen_my.root'),
+                fileName = cms.untracked.string('file:__OUTPUT__.root'),
                 SelectEvents = cms.untracked.PSet(
                     SelectEvents = cms.vstring('path')
                     ),

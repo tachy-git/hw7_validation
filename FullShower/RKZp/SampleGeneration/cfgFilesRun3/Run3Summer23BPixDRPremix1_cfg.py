@@ -34,7 +34,7 @@ process.maxEvents = cms.untracked.PSet(
 # Input source
 process.source = cms.Source("PoolSource",
     dropDescendantsOfDroppedBranches = cms.untracked.bool(False),
-    fileNames = cms.untracked.vstring('file:sim.root'),
+    fileNames = cms.untracked.vstring('file:__INPUT__.root'),
     inputCommands = cms.untracked.vstring(
         'keep *',
         'drop *_genParticles_*_*',
@@ -103,7 +103,7 @@ process.PREMIXRAWoutput = cms.OutputModule("PoolOutputModule",
         dataTier = cms.untracked.string('GEN-SIM-RAW'),
         filterName = cms.untracked.string('')
     ),
-    fileName = cms.untracked.string('file:dr1.root'),
+    fileName = cms.untracked.string('file:__OUTPUT__.root'),
     outputCommands = process.PREMIXRAWEventContent.outputCommands+['keep GenEventInfoProduct_*_*_*'],
     splitLevel = cms.untracked.int32(0)
 )

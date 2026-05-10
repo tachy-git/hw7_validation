@@ -17,20 +17,32 @@ herwigdir="/cms_scratch/taehee/HerwigSample/RKZp_13p6TeV/RS/hw_nEvt-100000/MZp-$
 outputdir="${campaign}/MZp-${zpmass}/gbb-${coupling}/${sample}"
 tmpdir="${WD}/tmp/${outputdir}"
 
-RUNS=("GEN" "SIM" "DRPremix1" "DRPremix2" "MiniAODv3" "NanoAOD")
-
 die() {
     echo "ERROR: $*" >&2
     exit 1
 }
 
-get_cmssw_list() {
+get_workflow() {
     case "$1" in
         Run3Summer22|Run3Summer22EE)
-            echo "CMSSW_12_4_11_patch3" "CMSSW_12_4_11_patch3" "CMSSW_12_4_11_patch3" "CMSSW_12_4_11_patch3" "CMSSW_12_4_11_patch3" "CMSSW_12_6_0"
+            cat <<EOF
+GEN CMSSW_12_4_11_patch3
+SIM CMSSW_12_4_11_patch3
+DRPremix1 CMSSW_12_4_11_patch3
+DRPremix2 CMSSW_12_4_11_patch3
+MiniAODv3 CMSSW_12_4_11_patch3
+NanoAOD CMSSW_12_6_0
+EOF
             ;;
         Run3Summer23|Run3Summer23BPix)
-            echo "CMSSW_13_0_14" "CMSSW_13_0_14" "CMSSW_13_0_14" "CMSSW_13_0_14" "CMSSW_13_0_14" "CMSSW_13_0_14"
+            cat <<EOF
+GEN CMSSW_13_0_14
+SIM CMSSW_13_0_14
+DRPremix1 CMSSW_13_0_14
+DRPremix2 CMSSW_13_0_14
+MiniAODv4 CMSSW_13_0_14
+NanoAOD CMSSW_13_0_14
+EOF
             ;;
         *)
             die "Wrong Campaign: $1. Choose among Run3Summer22 Run3Summer22EE Run3Summer23 Run3Summer23BPix"
@@ -38,18 +50,16 @@ get_cmssw_list() {
     esac
 }
 
-read -r -a CMSSW <<< "$(get_cmssw_list "$campaign")"
+mapfile -t WORKFLOW < <(get_workflow "$campaign")
 
 mkdir -p "${basedir}/${outputdir}"
 mkdir -p "${tmpdir}"
 
 is_log_success() {
     local logfile="$1"
+
     [[ -f "$logfile" ]] &&
-    (
-        grep -q "MessageLogger Summary" "$logfile" ||
-        grep -q "Closed" "$logfile"
-    ) &&
+    grep -q "Job has finished" "$logfile" &&
     ! grep -q "Begin Fatal Exception" "$logfile"
 }
 
@@ -73,7 +83,9 @@ prepare_cfg() {
     else
         local prev_step="$2"
         local input_base="${basedir}/${outputdir}/${prev_step}_${process}"
+
         [[ -f "${input_base}.root" ]] || die "${input_base}.root does not exist"
+
         sed -i "s|__INPUT__|${input_base}|g" "$cfg_out"
     fi
 }
@@ -83,7 +95,11 @@ run_cms() {
     local idx="$2"
     local cfg="${tmpdir}/${step}_${process}.py"
     local logfile="${tmpdir}/${step}_${process}.log"
-    local cmssw_src="${WD}/CMSSW/${CMSSW[$idx]}/src"
+    local cmssw
+
+    read -r _ cmssw <<< "${WORKFLOW[$idx]}"
+
+    local cmssw_src="${WD}/CMSSW/${cmssw}/src"
 
     [[ -d "$cmssw_src" ]] || die "Missing CMSSW area: $cmssw_src"
 
@@ -92,20 +108,22 @@ run_cms() {
 
     cd "$WD" || die "Failed to cd to $WD"
 
-    if [[ "$step" == "DIGIPremix1" ]]; then
+    if [[ "$step" == "DRPremix1" ]]; then
         local trial=0
+
         while true; do
             cmsRun "$cfg" &> "$logfile"
             local status=$?
 
             if [[ $status -eq 0 ]] && ! grep -q "Disabled source" "$logfile"; then
+                echo "Job has finished" >> "$logfile"
                 break
             fi
 
             if grep -q "Disabled source" "$logfile"; then
                 ((trial++))
                 echo "Failed to fetch PU files... retry ${trial}"
-                (( trial < 3 )) || die "DIGIPremix failed after several retries"
+                (( trial < 3 )) || die "DRPremix1 failed after several retries"
             else
                 die "cmsRun failed for ${step}. See ${logfile}"
             fi
@@ -113,42 +131,38 @@ run_cms() {
     else
         cmsRun "$cfg" &> "$logfile"
         local status=$?
-        [[ $status -eq 0 ]] || die "cmsRun failed for ${step}. See ${logfile}"
+
+        if [[ $status -eq 0 ]]; then
+            echo "Job has finished" >> "$logfile"
+        else
+            die "cmsRun failed for ${step}. See ${logfile}"
+        fi
     fi
 }
 
 runStep=-1
 
-for ((i=0; i<${#RUNS[@]}; i++)); do
-    step="${RUNS[$i]}"
+for ((i=0; i<${#WORKFLOW[@]}; i++)); do
+    read -r step cmssw <<< "${WORKFLOW[$i]}"
+
     outputFile="${basedir}/${outputdir}/${step}_${process}.root"
     logFile="${tmpdir}/${step}_${process}.log"
 
     if [[ -f "$outputFile" ]] && is_log_success "$logFile"; then
         echo "${outputFile}: exists and looks good"
         runStep=$i
-
-        if (( i > 0 )); then
-          for ((j=0; j<i; j++)); do
-            prev="${RUNS[$((j))]}"
-            prevFile="${basedir}/${outputdir}/${prev}_${process}.root"
-            #if [[ -f "$prevFile" ]]; then
-              #echo "Removing previous step file: $prevFile"
-              #rm -f "$prevFile"
-            #fi
-          done
-        fi
     fi
 done
 
-for ((i=runStep+1; i<${#RUNS[@]}; i++)); do
-    step="${RUNS[$i]}"
+for ((i=runStep+1; i<${#WORKFLOW[@]}; i++)); do
+    read -r step cmssw <<< "${WORKFLOW[$i]}"
+
     echo "Running ${outputdir}/${step}_${process}..."
 
     if [[ "$step" == "GEN" ]]; then
         prepare_cfg "$step"
     else
-        prev="${RUNS[$((i-1))]}"
+        read -r prev _ <<< "${WORKFLOW[$((i-1))]}"
         prepare_cfg "$step" "$prev"
     fi
 
@@ -159,10 +173,12 @@ for ((i=runStep+1; i<${#RUNS[@]}; i++)); do
 
     if [[ -f "$outputFile" ]] && is_log_success "$logFile"; then
         echo "${outputFile}: success"
+
         if (( i > 0 )); then
-            prev="${RUNS[$((i-1))]}"
-            if [[ "$prev" != "MiniAODv3" ]]; then
-              rm -f "${basedir}/${outputdir}/${prev}_${process}.root"
+            read -r prev _ <<< "${WORKFLOW[$((i-1))]}"
+
+            if [[ "$prev" != MiniAODv* ]]; then
+                rm -f "${basedir}/${outputdir}/${prev}_${process}.root"
             fi
         fi
     else
