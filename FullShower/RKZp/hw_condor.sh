@@ -33,7 +33,7 @@ esac
 
 coupling=""
 case "$zpmass" in
-  12) coupling="0p1" ;;
+  11|12|15|20|25|30|35|40|45|50|55|60|65|70) coupling="0p1" ;;
   *) die "Unsupported zpmass='$zpmass'" ;;
 esac
 
