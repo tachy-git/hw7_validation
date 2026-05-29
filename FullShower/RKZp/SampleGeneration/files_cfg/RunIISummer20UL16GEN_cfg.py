@@ -17,6 +17,8 @@ process.load('IOMC.EventVertexGenerators.VtxSmearedRealistic25ns13TeV2016Collisi
 process.load('GeneratorInterface.Core.genFilterSummary_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+process.load('RecoJets.Configuration.GenJetParticles_cff')
+process.load('RecoJets.Configuration.RecoGenJets_cff')
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
@@ -108,11 +110,13 @@ process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService
             engineName = cms.untracked.string('TRandom3'),
             ),
         )
+process.genParticlesForJets.src = cms.InputTag("genParticles")
 
 # Path and EndPath definitions
 # option 1
 #process.filterSequence = cms.Sequence(process.selectZprime*process.filterZprime*process.selectMu*process.selectMupair*process.filterMupair)
 # option 2
 process.filterSequence = cms.Sequence(process.selectZprime*process.filterZprime*process.selectFinalMu*process.selectFinalAntimu*process.filterFinalMu*process.filterFinalAntimu)
-process.path = cms.Path(process.genParticles*process.filterSequence*process.generatorSmeared)
+process.genJetSequence = cms.Sequence(process.genJetParticles*process.ak4GenJets*process.ak4GenJetsNoNu*process.ak8GenJets*process.ak8GenJetsNoNu)
+process.path = cms.Path(process.genParticles*process.filterSequence*process.generatorSmeared*process.genJetSequence)
 process.outpath = cms.EndPath(process.output)
