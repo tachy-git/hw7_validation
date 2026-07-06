@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 echo ""
 echo "Starting time : $(date +"%T")"
 echo ""
@@ -57,21 +56,32 @@ echo "Working Directory >> $outputdir"
 #########################
 ### environment setup ###
 #########################
-export PATH=$Singularity_Loc/.local/bin:$PATH
-export LIBTOOL=$Singularity_Loc/.local/bin/libtool
-export LIBTOOLIZE=$Singularity_Loc/.local/bin/libtoolize
-export ACLOCAL_PATH=$Singularity_Loc/.local/share/aclocal:$ACLOCAL_PATH
-export PATH="$Singularity_Loc/.pyenv/bin:$PATH"
-export PYENV_ROOT=$Singularity_Loc/.pyenv
-export PATH=$PYENV_ROOT/bin:$PATH
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-export PYTHONUSERBASE=$Singularity_Loc/.pyenv
-export PATH=$PYTHONUSERBASE/bin:$PATH
+
+echo "Host: $(hostname)"
+echo "User: $(whoami)"
+
+[[ -d "$Hw_Loc" ]] || die "$Hw_Loc does not exist"
+[[ -r "$Hw_Loc/hw7_validation/FullShower/RKZp/RAnalysis.cc" ]] || die "Cannot read RAnalysis.cc"
+[[ -r "$Hw_Loc/hw7_validation/FullShower/RKZp/input/$generation.in" ]] || die "Cannot read input/$generation.in"
+
+export PYENV_ROOT="$Singularity_Loc/.pyenv"
+
+[[ -x "$PYENV_ROOT/bin/pyenv" ]] || die "Cannot execute $PYENV_ROOT/bin/pyenv"
+
+export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$Singularity_Loc/.local/bin:$PATH"
+
+export LIBTOOL="$Singularity_Loc/.local/bin/libtool"
+export LIBTOOLIZE="$Singularity_Loc/.local/bin/libtoolize"
+export ACLOCAL_PATH="$Singularity_Loc/.local/share/aclocal:${ACLOCAL_PATH:-}"
+
+export PYTHONUSERBASE="$PYENV_ROOT"
+
 export LDFLAGS="-L$Singularity_Loc/.local/lib"
 export CPPFLAGS="-I$Singularity_Loc/.local/include"
 export PKG_CONFIG_PATH="$Singularity_Loc/.local/lib/pkgconfig"
+
+eval "$("$PYENV_ROOT/bin/pyenv" init -)"
+eval "$("$PYENV_ROOT/bin/pyenv" virtualenv-init -)"
 
 ###############
 ### HW run  ###
@@ -81,8 +91,10 @@ cp -r "$Hw_Loc/hw7_validation/FullShower/RKZp/UFO/MZp-${zpmass}_gbb-${coupling}/
 
 RB="$Singularity_Loc/bin/rivet-build"
 source "$Singularity_Loc/bin/activate"
+command -v Herwig || die "Herwig not found"
+command -v rivet-build || die "rivet-build not found"
 export RIVET_ANALYSIS_PATH="$(pwd -P)"
-chmod +x "$RB"
+#chmod +x "$RB"
 "$RB" Rivet.so RAnalysis.cc
 
 rnum="$(shuf -i 1-99999999 -n 1)"

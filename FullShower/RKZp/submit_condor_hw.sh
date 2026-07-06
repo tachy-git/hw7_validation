@@ -3,8 +3,9 @@
 generation="RS" #RS or FO
 com="13TeV" #13TeV or 13p6TeV
 
-JOBTAGS=("Pt-65To67_ppbb_34671" "Pt-67To70_ppbb_34672" "Pt-70To75_ppbb_34673" "Pt-75To80_ppbb_34674" "Pt-80To85_ppbb_34675" "Pt-85To90_ppbb_34676" "Pt-90To100_ppbb_34677" "Pt-100To120_ppbb_34678" "Pt-120To150_ppbb_34679" "Pt-150To9999_ppbb_34680")
-ZPMASSES=(12)
+JOBTAGS=("Pt-130To150_ppbb_195043")
+ZPMASSES=(35)
+QUEUES=(501)
 
 cat <<EOT > submit_condor_hw.txt
 universe        = vanilla
@@ -21,15 +22,30 @@ getenv = True
 EOT
 
 mkdir -p joblog
+MAX_ALLJOBS=19000
+MAX_MYJOBS=4900
 
 for ((i=0; i<${#JOBTAGS[@]}; i++)); do
 for ((m=0; m<${#ZPMASSES[@]}; m++)); do
     zpmass=${ZPMASSES[m]}
     jobtag=${JOBTAGS[i]}
     JobBatchName="${generation}_MZp-${zpmass}_$jobtag" \
-    queue=$(ls /cms_scratch/taehee/HerwigSample/RKZp_13TeV/RS/mg_nEvt-100000/$jobtag | wc -l)
+    #queue=$(ls /cms_scratch/taehee/HerwigSample/RKZp_13TeV/RS/mg_nEvt-100000/$jobtag | wc -l)
+    queue=${QUEUES[i]}
+    if (( queue < 1 )); then
+      continue
+    fi
+
     echo "Submitting $queue jobs: $JobBatchName"
-    sleep 1
+    while true; do
+      myjobs=$(condor_q taehee | awk '/Total for query:/ {print $4}')
+      alljobs=$(condor_q | awk '/Total for query:/ {print $4}')
+      if (( myjobs + queue <= MAX_MYJOBS && alljobs + queue <= MAX_ALLJOBS )); then
+        break
+      fi
+      echo -n Zzz...
+      sleep 360
+    done
 
     condor_submit submit_condor_hw.txt \
     -append "arguments = $jobtag \$(Process) $generation $zpmass $com" \

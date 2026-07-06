@@ -94,8 +94,10 @@ MG_File1="MG_output.dat"
 # ============================
 # make a symbolic link for pdf 303600
 # for the error, IsADirectoryError: [Errno 21] Is a directory: '/cms/ldap_home/taehee/HerwigWD/opt/MG5_aMC_v3_5_1/HEPTools/lhapdf6_py3/share/LHAPDF/NNPDF31_nnlo_as_0118'
-PDFSRC="/cms/ldap_home/taehee/HerwigWD/opt/$MG_version/HEPTools/lhapdf6_py3/share/LHAPDF/NNPDF31_nnlo_as_0118"
-PDFDST="$outputdir/mg/lib/PDFsets/NNPDF31_nnlo_as_0118"
+#PDFSRC="/cms/ldap_home/taehee/HerwigWD/opt/$MG_version/HEPTools/lhapdf6_py3/share/LHAPDF/NNPDF31_nnlo_as_0118"
+#PDFDST="$outputdir/mg/lib/PDFsets/NNPDF31_nnlo_as_0118"
+PDFSRC="/cms/ldap_home/taehee/HerwigWD/opt/$MG_version/HEPTools/lhapdf6_py3/share/LHAPDF/NNPDF31_nnlo_as_0118_mc_hessian_pdfas"
+PDFDST="$outputdir/mg/lib/PDFsets/NNPDF31_nnlo_as_0118_mc_hessian_pdfas"
 mkdir -p "$outputdir/mg/lib/PDFsets"
 rm -rf "$PDFDST"
 ln -s "$PDFSRC" "$PDFDST"
@@ -123,9 +125,9 @@ MG_File2="MG_launch.dat"
 
   rnum="$(shuf -i 1-99999999 -n 1)"
   echo "set iseed $rnum"
-  echo "set use_syst False"
   echo "set pdlabel lhapdf"
-  echo "set lhaid 303600"
+  #echo "set lhaid 303600"
+  echo "set lhaid 325300"
 } >> "$MG_File2"
 
 "$MG" "$MG_File2"
