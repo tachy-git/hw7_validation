@@ -178,6 +178,22 @@ def customizeForExternalMiniAOD(process):
     #        if isinstance(val, cms.InputTag) and val.moduleLabel == "generator":
     #            print(f"Patching {name}.{attr}: generator -> source:generator:GEN")
     #            setattr(mod, attr, cms.InputTag("source", "generator", "GEN"))
+    genInfoTag = cms.InputTag("generator", "", "GEN")
+
+    selectedPdfWeightIndices = [idx for idx in range(42, 144) if idx not in (45, 46)] + [45, 46]
+    process.selectedGenWeightsTable = cms.EDProducer(
+        "CustomNanoGenWeightsTableProducer",
+        genEvent = genInfoTag,
+        scaleIndices = cms.vuint32(13, 12, 18, 2, 0, 7, 28, 27, 33),
+        pdfIndices = cms.vuint32(*selectedPdfWeightIndices),
+        precision = cms.int32(14),
+        normalizeToNominal = cms.bool(True),
+        prependPdfOne = cms.bool(True),
+    )
+    if hasattr(process, "genWeightsTable"):
+        process.nanoAOD_step.replace(process.genWeightsTable, process.selectedGenWeightsTable)
+    else:
+        process.nanoAOD_step.insert(0, process.selectedGenWeightsTable)
 
     return process
 
