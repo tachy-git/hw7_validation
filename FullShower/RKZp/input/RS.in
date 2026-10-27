@@ -21,6 +21,13 @@ cd /Herwig/Generators
 
 read FRModel.model
 
+##################################################
+## Matching selection
+##################################################
+read Matchbox/LO-DefaultShower.in
+# read Matchbox/MCatLO-DefaultShower.in
+# read Matchbox/MCatNLO-DefaultShower.in
+
 cd /Herwig/NewPhysics
 
 #set TwoBodyDC:CreateDecayModes No
@@ -149,12 +156,8 @@ cd /Herwig/MatrixElements/Matchbox
 set Factory:ScaleChoice Scales/SHatScale
 
 ##################################################
-## Matching and shower selection
+## Shower selection
 ##################################################
-
-read Matchbox/LO-DefaultShower.in
-# read Matchbox/MCatLO-DefaultShower.in
-# read Matchbox/MCatNLO-DefaultShower.in
 
 set /Herwig/Shower/ShowerHandler:Interactions ALL
 set /Herwig/Shower/ShowerHandler:IntrinsicPtGaussian 2.2*GeV # add this line referencing LHC-FRModel.in
